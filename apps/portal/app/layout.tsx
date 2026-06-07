@@ -4,11 +4,19 @@ import { DM_Sans } from "next/font/google";
 import Script from "next/script";
 import { AuthProvider } from "@/lib/auth";
 
-const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-sans", weight: ["400", "500", "600", "700"] });
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
-  title: "UZBron Biznes — Hamkorlar portali",
-  description: "Mehmonxonangizni qo'shing va bronlarni boshqaring",
+  title: {
+    default: "UZBron — O'zbekistonda mehmonxona bron qilish",
+    template: "%s | UZBron",
+  },
+  description:
+    "O'zbekiston bo'ylab mehmonxona va dam olish maskanlarini toping, solishtiring va ishonchli bron qiling.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,8 +1,8 @@
 import {
-  Body, Controller, Get, Param, Post, UseGuards, Module, Injectable, NotFoundException,
+  Body, Controller, Get, Param, Patch, Post, UseGuards, Module, Injectable, NotFoundException,
 } from "@nestjs/common";
 import {
-  IsArray, IsInt, IsNumber, IsOptional, IsString, Max, Min,
+  IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min,
 } from "class-validator";
 import { Type } from "class-transformer";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
@@ -28,6 +28,10 @@ export class AddUnitDto {
   @Type(() => Number) @IsInt() @Min(1) capacity!: number;
   @IsOptional() @IsString() beds?: string;
   @IsOptional() @IsString() size?: string;
+}
+
+export class UpdateBookingStatusDto {
+  @IsIn(["CONFIRMED", "CANCELLED", "COMPLETED"]) status!: string;
 }
 
 @Injectable()
@@ -136,6 +140,20 @@ export class VendorService {
     return { id: unit.id, ok: true };
   }
 
+  /** Vendor o'z e'loniga tegishli bronning holatini o'zgartiradi */
+  async updateBookingStatus(userId: string, bookingId: string, status: string) {
+    const vendor = await this.ensureVendor(userId);
+    const booking = await this.prisma.booking.findFirst({
+      where: { id: bookingId, listing: { vendorId: vendor.id } },
+    });
+    if (!booking) throw new NotFoundException("Bron topilmadi");
+    const updated = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: status as never },
+    });
+    return { id: updated.id, status: updated.status, ok: true };
+  }
+
   async bookings(userId: string) {
     const vendor = await this.ensureVendor(userId);
     const bookings = await this.prisma.booking.findMany({
@@ -195,6 +213,15 @@ export class VendorController {
   @Get("bookings")
   bookings(@CurrentUser() u: CurrentUserData) {
     return this.vendor.bookings(u.id);
+  }
+
+  @Patch("bookings/:id/status")
+  updateBookingStatus(
+    @CurrentUser() u: CurrentUserData,
+    @Param("id") id: string,
+    @Body() dto: UpdateBookingStatusDto,
+  ) {
+    return this.vendor.updateBookingStatus(u.id, id, dto.status);
   }
 }
 
