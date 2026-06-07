@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+
+# Expo
+.expo/
+.expo-shared/
+*.orig.*
+web-build/
+
+# Native
+*.apk
+*.aab
+*.ipa
+ios/
+android/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Prisma
+apps/api/prisma/*.db
+
+# Logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Docker volumes
+docker-data/

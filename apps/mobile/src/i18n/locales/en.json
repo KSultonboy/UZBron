@@ -1,0 +1,21 @@
+{
+  "common": {
+    "appName": "UZBron",
+    "search": "Search",
+    "book": "Book",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading...",
+    "error": "An error occurred"
+  },
+  "home": {
+    "title": "What are we booking?",
+    "subtitle": "Hotels across Uzbekistan",
+    "categories": "Categories"
+  },
+  "tabs": {
+    "home": "Home",
+    "bookings": "Bookings",
+    "profile": "Profile"
+  }
+}

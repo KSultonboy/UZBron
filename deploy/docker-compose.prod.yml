@@ -1,0 +1,43 @@
+# UZBooking — production stack (Server 2). DB + API.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: uzbooking-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: uzbooking
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: uzbooking
+    volumes:
+      - uzbooking_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uzbooking"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    container_name: uzbooking-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgresql://uzbooking:${DB_PASSWORD}@db:5432/uzbooking?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_TTL: "15m"
+      JWT_REFRESH_TTL: "30d"
+      OTP_DEV_MODE: ${OTP_DEV_MODE}
+      GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS}
+    # Hozircha to'g'ridan-to'g'ri ochiq (test uchun). Keyin nginx orqasiga olamiz.
+    ports:
+      - "4100:3000"
+
+volumes:
+  uzbooking_pgdata:

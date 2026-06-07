@@ -1,0 +1,7 @@
+// Portal konfiguratsiyasi
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api/v1";
+
+export const GOOGLE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ??
+  "418806562360-p1lni82kjc4ma6e4n70uhimt25e3pd51.apps.googleusercontent.com";

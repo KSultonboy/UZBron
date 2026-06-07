@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "uzbooking-web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@uzbooking/mobile", "exec", "expo", "start", "--web", "--port", "8081"],
+      "port": 8081,
+      "autoPort": false
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "UZBron",
+    "slug": "uzbooking",
+    "version": "0.1.1",
+    "orientation": "portrait",
+    "scheme": "uzbron",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "uz.uzbron.app"
+    },
+    "android": {
+      "package": "uz.uzbron.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-localization",
+      "@react-native-google-signin/google-signin"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "003aac92-438d-40bc-9c53-86a07157fc8a"
+      }
+    },
+    "owner": "ruhshonatortapps"
+  }
+}

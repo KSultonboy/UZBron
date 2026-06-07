@@ -1,0 +1,30 @@
+{
+  "name": "uzbooking",
+  "version": "0.1.0",
+  "private": true,
+  "description": "O'zbekiston bo'ylab universal bron platformasi (super-app)",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "api:dev": "pnpm --filter @uzbooking/api start:dev",
+    "mobile:start": "pnpm --filter @uzbooking/mobile start",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "19.1.0",
+      "react-dom": "19.1.0"
+    }
+  }
+}

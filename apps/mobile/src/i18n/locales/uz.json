@@ -1,0 +1,21 @@
+{
+  "common": {
+    "appName": "UZBron",
+    "search": "Qidirish",
+    "book": "Bron qilish",
+    "cancel": "Bekor qilish",
+    "save": "Saqlash",
+    "loading": "Yuklanmoqda...",
+    "error": "Xatolik yuz berdi"
+  },
+  "home": {
+    "title": "Nimani bron qilamiz?",
+    "subtitle": "O'zbekiston bo'ylab mehmonxonalar",
+    "categories": "Kategoriyalar"
+  },
+  "tabs": {
+    "home": "Asosiy",
+    "bookings": "Bronlarim",
+    "profile": "Profil"
+  }
+}

@@ -1,0 +1,11 @@
+ALTER TABLE "users" ALTER COLUMN "phone" DROP NOT NULL;
+
+ALTER TABLE "users"
+ADD COLUMN IF NOT EXISTS "email" TEXT,
+ADD COLUMN IF NOT EXISTS "googleId" TEXT,
+ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "birthday" DATE,
+ADD COLUMN IF NOT EXISTS "gender" TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "users_googleId_key" ON "users"("googleId");
