@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 512px; height: 512px; overflow: hidden; }
+  .icon {
+    width: 512px; height: 512px;
+    background: linear-gradient(140deg, #20428f 0%, #16306f 55%, #0f2454 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    font-family: "Segoe UI", system-ui, sans-serif;
+  }
+  /* subtle gold glow */
+  .icon::before {
+    content: ""; position: absolute; width: 360px; height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(234,179,8,0.18) 0%, rgba(234,179,8,0) 70%);
+    top: -60px; right: -60px;
+  }
+  .wrap { display: flex; flex-direction: column; align-items: center; gap: 26px; z-index: 2; }
+  .badge {
+    width: 188px; height: 188px; border-radius: 46px;
+    background: linear-gradient(145deg, #eab308 0%, #ca8a04 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.35), inset 0 2px 6px rgba(255,255,255,0.35);
+  }
+  .badge svg { width: 108px; height: 108px; }
+  .word { font-size: 62px; font-weight: 800; letter-spacing: -1px; }
+  .word .uz { color: #ffffff; }
+  .word .bron { color: #eab308; }
+</style>
+</head>
+<body>
+  <div class="icon">
+    <div class="wrap">
+      <div class="badge">
+        <!-- bed icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="#16306f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 4v16"/>
+          <path d="M2 8h18a2 2 0 0 1 2 2v10"/>
+          <path d="M2 17h20"/>
+          <path d="M6 8v9"/>
+        </svg>
+      </div>
+      <div class="word"><span class="uz">UZ</span><span class="bron">Bron</span></div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1024px; height: 500px; overflow: hidden; }
+  .fg {
+    width: 1024px; height: 500px; position: relative; overflow: hidden;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(120deg, #16306f 0%, #20428f 100%);
+    display: flex; align-items: center;
+  }
+  .photo {
+    position: absolute; right: 0; top: 0; width: 520px; height: 500px;
+    background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1100&q=85');
+    background-size: cover; background-position: center;
+  }
+  .photo::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, #16306f 0%, rgba(22,48,111,0.55) 35%, rgba(22,48,111,0.25) 100%);
+  }
+  .glow {
+    position: absolute; width: 520px; height: 520px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(234,179,8,0.20) 0%, rgba(234,179,8,0) 70%);
+    left: -120px; bottom: -180px;
+  }
+  .content { position: relative; z-index: 3; padding: 0 64px; max-width: 640px; }
+  .brand { font-size: 60px; font-weight: 800; letter-spacing: -1px; margin-bottom: 18px; }
+  .brand .uz { color: #fff; }
+  .brand .bron { color: #eab308; }
+  .headline { color: #fff; font-size: 38px; font-weight: 700; line-height: 1.18; margin-bottom: 16px; }
+  .sub { color: rgba(255,255,255,0.78); font-size: 21px; font-weight: 500; line-height: 1.4; }
+  .pills { display: flex; gap: 12px; margin-top: 28px; }
+  .pill {
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22);
+    color: #fff; font-size: 16px; font-weight: 600; padding: 9px 18px; border-radius: 999px;
+  }
+  .pill.gold { background: #eab308; border-color: #eab308; color: #16306f; }
+</style>
+</head>
+<body>
+  <div class="fg">
+    <div class="glow"></div>
+    <div class="photo"></div>
+    <div class="content">
+      <div class="brand"><span class="uz">UZ</span><span class="bron">Bron</span></div>
+      <div class="headline">O'zbekistonda mehmonxona<br>broni — oson va ishonchli</div>
+      <div class="sub">Toshkent, Samarqand, Buxoro va boshqa shaharlardagi eng yaxshi joylarni bron qiling.</div>
+      <div class="pills">
+        <div class="pill gold">Mehmonxonalar</div>
+        <div class="pill">Tez bron</div>
+        <div class="pill">Aniq narxlar</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
