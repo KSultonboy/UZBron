@@ -9,6 +9,7 @@ import { BookingsModule } from "./bookings/bookings.module";
 import { FavoritesModule } from "./favorites/favorites.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { VendorModule } from "./vendor/vendor.module";
+import { UploadsModule } from "./uploads/uploads.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { VendorModule } from "./vendor/vendor.module";
     FavoritesModule,
     ReviewsModule,
     VendorModule,
+    UploadsModule,
   ],
   controllers: [HealthController],
 })

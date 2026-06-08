@@ -1,9 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Building2, Check, ImagePlus, Save, Star } from "lucide-react";
-import { api } from "@/lib/api";
+import { ArrowLeft, Building2, Check, ImagePlus, Loader2, Save, Star, Upload, X } from "lucide-react";
+import { api, uploadFile } from "@/lib/api";
 import { PARTNER_LISTINGS } from "@/lib/portal-paths";
 
 const amenities = [
@@ -20,6 +21,28 @@ export default function NewPartnerListingPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(["wifi"]);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  const onPickFiles = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = ""; // bir xil faylni qayta tanlash mumkin bo'lsin
+    if (!files.length) return;
+    setUploading(true);
+    setError(null);
+    try {
+      for (const file of files) {
+        const { url } = await uploadFile("/uploads", file);
+        setPhotos((prev) => [...prev, url]);
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Rasm yuklashda xato");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = (url: string) => setPhotos((prev) => prev.filter((p) => p !== url));
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -36,10 +59,7 @@ export default function NewPartnerListingPage() {
           description: form.get("description"),
           stars: Number(form.get("stars")),
           basePrice: Number(form.get("basePrice")),
-          photos: String(form.get("photos") ?? "")
-            .split("\n")
-            .map((item) => item.trim())
-            .filter(Boolean),
+          photos,
           amenities: selectedAmenities,
         },
       });
@@ -119,14 +139,47 @@ export default function NewPartnerListingPage() {
 
         <section className="rounded-lg border border-line bg-white p-5 sm:p-6">
           <SectionTitle icon={ImagePlus} title="Rasmlar" />
-          <Field label="Rasm havolalari" hint="Har bir URL'ni yangi qatordan kiriting">
-            <textarea
-              name="photos"
-              rows={4}
-              className="form-input min-h-28 resize-y py-3"
-              placeholder={"https://example.com/hotel-1.jpg\nhttps://example.com/hotel-2.jpg"}
-            />
-          </Field>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {photos.map((url) => (
+              <div key={url} className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-line">
+                <Image src={url} alt="" fill sizes="200px" className="object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(url)}
+                  className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-black/55 text-white opacity-0 transition group-hover:opacity-100"
+                  aria-label="Rasmni o'chirish"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            ))}
+
+            <label
+              className={`flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-line text-muted transition hover:border-primary hover:text-primary ${
+                uploading ? "pointer-events-none opacity-60" : ""
+              }`}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 size={26} className="animate-spin" />
+                  <span className="text-xs font-semibold">Yuklanmoqda...</span>
+                </>
+              ) : (
+                <>
+                  <Upload size={26} />
+                  <span className="text-xs font-semibold">Rasm yuklash</span>
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                className="hidden"
+                onChange={onPickFiles}
+              />
+            </label>
+          </div>
+          <p className="mt-3 text-xs text-subtle">JPG, PNG yoki WEBP · har biri 6 MB gacha · bir nechta tanlash mumkin</p>
         </section>
 
         <section className="rounded-lg border border-line bg-white p-5 sm:p-6">
