@@ -37,6 +37,12 @@ services:
       GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS}
       UPLOADS_DIR: /app/uploads
       PUBLIC_API_ORIGIN: ${PUBLIC_API_ORIGIN}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-465}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
     volumes:
       - uzbooking_uploads:/app/uploads
     # Hozircha to'g'ridan-to'g'ri ochiq (test uchun). Keyin nginx orqasiga olamiz.

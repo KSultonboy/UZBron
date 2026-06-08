@@ -7,9 +7,11 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Faqat package.json — workspace-only dep (runtime'da ishlatilmaydi) olib tashlanadi
+# Faqat package.json — workspace-only dep va postinstall (prisma generate
+# bu yerda emas, quyida alohida ishlaydi) olib tashlanadi
 COPY package.json ./
 RUN sed -i '/@uzbooking\/shared-types/d' package.json \
+    && sed -i '/"postinstall"/d' package.json \
     && npm install --no-audit --no-fund
 
 # Prisma client generatsiyasi

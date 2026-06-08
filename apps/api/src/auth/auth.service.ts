@@ -1,8 +1,13 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, BadRequestException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
+import { randomBytes, scrypt, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 import { PrismaService } from "../prisma/prisma.service";
+import { MailService } from "./mail.service";
 import { UpdateMeDto } from "./dto";
+
+const scryptAsync = promisify(scrypt);
 
 export interface JwtPayload {
   sub: string;
@@ -16,10 +21,25 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
 
   private get devMode(): boolean {
     return this.config.get("OTP_DEV_MODE") === "true";
+  }
+
+  private async hashPassword(password: string): Promise<string> {
+    const salt = randomBytes(16).toString("hex");
+    const derived = (await scryptAsync(password, salt, 64)) as Buffer;
+    return `${salt}:${derived.toString("hex")}`;
+  }
+
+  private async verifyPassword(password: string, stored: string): Promise<boolean> {
+    const [salt, hash] = stored.split(":");
+    if (!salt || !hash) return false;
+    const derived = (await scryptAsync(password, salt, 64)) as Buffer;
+    const hashBuf = Buffer.from(hash, "hex");
+    return hashBuf.length === derived.length && timingSafeEqual(hashBuf, derived);
   }
 
   /** 1-qadam: telefonga OTP yuborish (dev rejimida kod javobda qaytadi) */
@@ -172,6 +192,84 @@ export class AuthService {
       this.prisma.user.delete({ where: { id: userId } }),
     ]);
     return { ok: true };
+  }
+
+  /**
+   * Email + parol bilan kirish (oddiy ko'rinishdagi auth).
+   * - Oddiy foydalanuvchi → to'g'ridan-to'g'ri tokenlar.
+   * - Biznes/agentlik a'zosi (Vendor bor yoki VENDOR/ADMIN) → emailga kod yuboriladi (2FA).
+   */
+  async loginWithPassword(email: string, password: string) {
+    const e = email.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: { email: e },
+      include: { vendor: { select: { id: true } } },
+    });
+    // Bir xil xato — userni "bor/yo'q" ekanini oshkor qilmaymiz.
+    if (!user || !user.passwordHash || !(await this.verifyPassword(password, user.passwordHash))) {
+      throw new UnauthorizedException("Email yoki parol noto'g'ri");
+    }
+
+    const isBusiness = !!user.vendor || user.role === "VENDOR" || user.role === "ADMIN";
+    if (isBusiness) {
+      const code = this.devMode
+        ? "111111"
+        : String(Math.floor(100000 + Math.random() * 900000));
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      await this.prisma.emailCode.deleteMany({ where: { email: e } });
+      await this.prisma.emailCode.create({ data: { email: e, code, expiresAt } });
+      await this.mail.sendCode(e, code);
+      return { requiresEmailCode: true, email: e, ...(this.devMode ? { devCode: code } : {}) };
+    }
+
+    const tokens = await this.issueTokens(user.id, user.role, user.phone);
+    return { user: this.publicUser(user), tokens };
+  }
+
+  /** Biznes 2FA: emailga yuborilgan kodni tasdiqlash → tokenlar. */
+  async verifyEmailCode(email: string, code: string) {
+    const e = email.trim().toLowerCase();
+    const rec = await this.prisma.emailCode.findFirst({
+      where: { email: e, code, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!rec) throw new UnauthorizedException("Kod noto'g'ri yoki muddati o'tgan");
+    await this.prisma.emailCode.deleteMany({ where: { email: e } });
+
+    const user = await this.prisma.user.findUnique({ where: { email: e } });
+    if (!user) throw new UnauthorizedException("Foydalanuvchi topilmadi");
+    const tokens = await this.issueTokens(user.id, user.role, user.phone);
+    return { user: this.publicUser(user), tokens };
+  }
+
+  /** Admin: biznes/agentlik akkauntini email+parol bilan yaratish (x-admin-secret bilan). */
+  async createBusiness(
+    secret: string | undefined,
+    dto: { email: string; password: string; name?: string; businessName?: string },
+  ) {
+    const adminSecret = this.config.get<string>("ADMIN_SECRET");
+    if (!adminSecret || secret !== adminSecret) {
+      throw new UnauthorizedException("Ruxsat yo'q");
+    }
+    const e = dto.email.trim().toLowerCase();
+    if (dto.password.length < 6) throw new BadRequestException("Parol kamida 6 belgidan iborat bo'lsin");
+    const passwordHash = await this.hashPassword(dto.password);
+
+    const user = await this.prisma.user.upsert({
+      where: { email: e },
+      update: { passwordHash, role: "VENDOR", ...(dto.name ? { name: dto.name } : {}) },
+      create: { email: e, passwordHash, role: "VENDOR", name: dto.name ?? null },
+    });
+    await this.prisma.vendor.upsert({
+      where: { ownerId: user.id },
+      update: { name: dto.businessName ?? dto.name ?? "Biznes", status: "APPROVED" },
+      create: {
+        ownerId: user.id,
+        name: dto.businessName ?? dto.name ?? "Biznes",
+        status: "APPROVED",
+      },
+    });
+    return { ok: true, userId: user.id, email: e };
   }
 
   private async issueTokens(sub: string, role: string, phone: string | null) {

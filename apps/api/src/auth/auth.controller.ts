@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, Patch, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import {
   RequestOtpDto, VerifyOtpDto, RefreshDto, GoogleSignInDto, UpdateMeDto,
+  LoginDto, EmailVerifyDto, CreateBusinessDto,
 } from "./dto";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { CurrentUser, type CurrentUserData } from "./current-user.decorator";
@@ -25,6 +26,24 @@ export class AuthController {
   @Post("google")
   google(@Body() dto: GoogleSignInDto) {
     return this.auth.googleSignIn(dto.idToken);
+  }
+
+  @Post("login")
+  login(@Body() dto: LoginDto) {
+    return this.auth.loginWithPassword(dto.email, dto.password);
+  }
+
+  @Post("login/email-verify")
+  emailVerify(@Body() dto: EmailVerifyDto) {
+    return this.auth.verifyEmailCode(dto.email, dto.code);
+  }
+
+  @Post("admin/create-business")
+  createBusiness(
+    @Headers("x-admin-secret") secret: string | undefined,
+    @Body() dto: CreateBusinessDto,
+  ) {
+    return this.auth.createBusiness(secret, dto);
   }
 
   @Post("refresh")

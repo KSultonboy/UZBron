@@ -27,6 +27,31 @@ export function verifyOtp(phone: string, code: string, name?: string) {
   );
 }
 
+/** Email+parol bilan kirish. Biznes akkaunt bo'lsa kod talab qilinadi. */
+export interface PasswordLoginResult {
+  requiresEmailCode?: boolean;
+  email?: string;
+  devCode?: string;
+  user?: AuthUser;
+  tokens?: AuthTokens;
+}
+
+export function loginWithPassword(email: string, password: string) {
+  return api.post<PasswordLoginResult>(
+    "/auth/login",
+    { email, password },
+    { auth: false },
+  );
+}
+
+export function verifyEmailCode(email: string, code: string) {
+  return api.post<AuthResult>(
+    "/auth/login/email-verify",
+    { email, code },
+    { auth: false },
+  );
+}
+
 export type MeResult = AuthMe;
 
 export interface UpdateMeInput {

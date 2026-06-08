@@ -49,17 +49,18 @@ enum BookingStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  phone     String?  @unique
-  email     String?  @unique
-  googleId  String?  @unique
-  avatarUrl String?
-  name      String?
-  birthday  DateTime? @db.Date
-  gender    String?
-  role      UserRole @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  phone        String?  @unique
+  email        String?  @unique
+  googleId     String?  @unique
+  passwordHash String?
+  avatarUrl    String?
+  name         String?
+  birthday     DateTime? @db.Date
+  gender       String?
+  role         UserRole @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   vendor    Vendor?
   bookings  Booking[]
@@ -79,6 +80,18 @@ model OtpCode {
 
   @@index([phone])
   @@map("otp_codes")
+}
+
+/// Email tasdiqlash kodlari (biznes akkaunt 2FA uchun)
+model EmailCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("email_codes")
 }
 
 /// Saqlanganlar (wishlist) — server tomonda

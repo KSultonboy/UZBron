@@ -26,6 +26,43 @@ export class RefreshDto {
   refreshToken!: string;
 }
 
+export class LoginDto {
+  @IsEmail({}, { message: "Email noto'g'ri" })
+  email!: string;
+
+  @IsString()
+  @Length(6, 100, { message: "Parol kamida 6 belgi" })
+  password!: string;
+}
+
+export class EmailVerifyDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @Length(6, 6, { message: "Kod 6 xonali bo'lishi kerak" })
+  code!: string;
+}
+
+export class CreateBusinessDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @Length(6, 100)
+  password!: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 80)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 120)
+  businessName?: string;
+}
+
 export class GoogleSignInDto {
   @IsString()
   idToken!: string;
