@@ -162,6 +162,18 @@ export class AuthService {
     return this.me(userId);
   }
 
+  /** Hisobni va unga bog'liq barcha ma'lumotlarni o'chirish (Play talabi). */
+  async deleteAccount(userId: string) {
+    // bookings va reviews User'ga cascade emas — avval qo'lda o'chiramiz.
+    // favorites va vendor (→listings→units...) cascade orqali o'chadi.
+    await this.prisma.$transaction([
+      this.prisma.review.deleteMany({ where: { customerId: userId } }),
+      this.prisma.booking.deleteMany({ where: { customerId: userId } }),
+      this.prisma.user.delete({ where: { id: userId } }),
+    ]);
+    return { ok: true };
+  }
+
   private async issueTokens(sub: string, role: string, phone: string | null) {
     const accessToken = await this.jwt.signAsync(
       { sub, role, phone },

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Patch, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import {
@@ -44,5 +44,12 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   updateMe(@CurrentUser() user: CurrentUserData, @Body() dto: UpdateMeDto) {
     return this.auth.updateMe(user.id, dto);
+  }
+
+  @Delete("me")
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  deleteMe(@CurrentUser() user: CurrentUserData) {
+    return this.auth.deleteAccount(user.id);
   }
 }

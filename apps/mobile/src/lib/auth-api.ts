@@ -62,3 +62,17 @@ export function useUpdateMe() {
     },
   });
 }
+
+/** Hisobni butunlay o'chirish (Play talabi) — so'ngra avtomatik chiqish. */
+export function useDeleteAccount() {
+  const qc = useQueryClient();
+  const signOut = useAuthStore((s) => s.signOut);
+
+  return useMutation({
+    mutationFn: () => api.delete<{ ok: true }>("/auth/me"),
+    onSuccess: async () => {
+      await signOut();
+      qc.clear();
+    },
+  });
+}
