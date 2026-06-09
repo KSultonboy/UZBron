@@ -2,8 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Building2, Check, ImagePlus, Loader2, Save, Star, Upload, X } from "lucide-react";
+import { ArrowLeft, BedDouble, Building2, Check, ChevronRight, ImagePlus, Loader2, Save, Star, Upload, X } from "lucide-react";
 import { api, uploadFile } from "@/lib/api";
 import { PARTNER_LISTINGS } from "@/lib/portal-paths";
 
@@ -116,6 +117,24 @@ export function ListingForm({
             : "Asosiy ma'lumotlarni kiriting va e'lonni joylang."}
         </p>
       </div>
+
+      {mode === "edit" && listingId && (
+        <Link
+          href={`${PARTNER_LISTINGS}/${listingId}/rooms`}
+          className="mt-5 flex items-center justify-between rounded-lg border border-line bg-white px-5 py-4 transition hover:border-primary"
+        >
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary-50 text-primary">
+              <BedDouble size={18} />
+            </div>
+            <div>
+              <div className="text-sm font-bold">Xonalarni boshqarish</div>
+              <div className="text-xs text-muted">Xona turlari, narxlar va sig&apos;imni sozlang</div>
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-subtle" />
+        </Link>
+      )}
 
       <form onSubmit={submit} className="mt-7 space-y-5">
         <section className="rounded-lg border border-line bg-white p-5 sm:p-6">

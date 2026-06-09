@@ -1,5 +1,5 @@
 import {
-  Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Module, Injectable, NotFoundException,
+  BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Module, Injectable, NotFoundException,
 } from "@nestjs/common";
 import {
   IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min,
@@ -27,6 +27,14 @@ export class AddUnitDto {
   @IsString() name!: string;
   @Type(() => Number) @IsNumber() @Min(0) basePrice!: number;
   @Type(() => Number) @IsInt() @Min(1) capacity!: number;
+  @IsOptional() @IsString() beds?: string;
+  @IsOptional() @IsString() size?: string;
+}
+
+export class UpdateUnitDto {
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0) basePrice?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) capacity?: number;
   @IsOptional() @IsString() beds?: string;
   @IsOptional() @IsString() size?: string;
 }
@@ -236,6 +244,68 @@ export class VendorService {
     return { id: unit.id, ok: true };
   }
 
+  /** E'lonning xonalari ro'yxati. */
+  async listUnits(userId: string, listingId: string) {
+    const vendor = await this.ensureVendor(userId);
+    const l = await this.prisma.listing.findFirst({
+      where: { id: listingId, vendorId: vendor.id },
+      include: { units: { orderBy: { basePrice: "asc" } } },
+    });
+    if (!l) throw new NotFoundException("E'lon topilmadi");
+    return {
+      listingTitle: l.title,
+      items: l.units.map((u) => {
+        const a = (u.attributes ?? {}) as { beds?: string; size?: string };
+        return {
+          id: u.id,
+          name: u.name,
+          basePrice: Number(u.basePrice),
+          capacity: u.capacity,
+          beds: a.beds ?? "",
+          size: a.size ?? "",
+        };
+      }),
+    };
+  }
+
+  async updateUnit(userId: string, unitId: string, dto: UpdateUnitDto) {
+    const vendor = await this.ensureVendor(userId);
+    const unit = await this.prisma.bookableUnit.findFirst({
+      where: { id: unitId, listing: { vendorId: vendor.id } },
+    });
+    if (!unit) throw new NotFoundException("Xona topilmadi");
+    const a = (unit.attributes ?? {}) as { beds?: string; size?: string };
+    const data: Prisma.BookableUnitUpdateInput = {};
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.basePrice !== undefined) data.basePrice = dto.basePrice;
+    if (dto.capacity !== undefined) data.capacity = dto.capacity;
+    if (dto.beds !== undefined || dto.size !== undefined) {
+      data.attributes = {
+        ...a,
+        ...(dto.beds !== undefined ? { beds: dto.beds } : {}),
+        ...(dto.size !== undefined ? { size: dto.size } : {}),
+      } as Prisma.InputJsonValue;
+    }
+    await this.prisma.bookableUnit.update({ where: { id: unitId }, data });
+    return { ok: true };
+  }
+
+  async deleteUnit(userId: string, unitId: string) {
+    const vendor = await this.ensureVendor(userId);
+    const unit = await this.prisma.bookableUnit.findFirst({
+      where: { id: unitId, listing: { vendorId: vendor.id } },
+    });
+    if (!unit) throw new NotFoundException("Xona topilmadi");
+    const count = await this.prisma.bookableUnit.count({ where: { listingId: unit.listingId } });
+    if (count <= 1) throw new BadRequestException("E'londa kamida bitta xona qolishi kerak");
+    // bookings unit'ga cascade emas — avval o'chiramiz. availability cascade.
+    await this.prisma.$transaction([
+      this.prisma.booking.deleteMany({ where: { unitId } }),
+      this.prisma.bookableUnit.delete({ where: { id: unitId } }),
+    ]);
+    return { ok: true };
+  }
+
   /** Vendor o'z e'loniga tegishli bronning holatini o'zgartiradi */
   async updateBookingStatus(userId: string, bookingId: string, status: string) {
     const vendor = await this.ensureVendor(userId);
@@ -316,9 +386,24 @@ export class VendorController {
     return this.vendor.deleteListing(u.id, id);
   }
 
+  @Get("listings/:id/units")
+  listUnits(@CurrentUser() u: CurrentUserData, @Param("id") id: string) {
+    return this.vendor.listUnits(u.id, id);
+  }
+
   @Post("listings/:id/units")
   addUnit(@CurrentUser() u: CurrentUserData, @Param("id") id: string, @Body() dto: AddUnitDto) {
     return this.vendor.addUnit(u.id, id, dto);
+  }
+
+  @Patch("units/:unitId")
+  updateUnit(@CurrentUser() u: CurrentUserData, @Param("unitId") unitId: string, @Body() dto: UpdateUnitDto) {
+    return this.vendor.updateUnit(u.id, unitId, dto);
+  }
+
+  @Delete("units/:unitId")
+  deleteUnit(@CurrentUser() u: CurrentUserData, @Param("unitId") unitId: string) {
+    return this.vendor.deleteUnit(u.id, unitId);
   }
 
   @Get("bookings")
