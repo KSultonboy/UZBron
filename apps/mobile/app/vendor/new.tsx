@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { View, ScrollView, TextInput, Pressable } from "react-native";
+import { View, ScrollView, TextInput, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Text } from "@/components/ui/Text";
@@ -9,6 +11,7 @@ import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { colors, font, shadow } from "@/theme/tokens";
 import { AMENITIES, type IconName } from "@/data/hotels";
 import { useCreateVendorListing } from "@/lib/vendor";
+import { uploadImage } from "@/lib/api";
 
 const DEFAULT_PHOTO =
   "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
@@ -48,10 +51,40 @@ export default function NewListingScreen() {
   const [stars, setStars] = useState(4);
   const [price, setPrice] = useState("");
   const [amenities, setAmenities] = useState<string[]>(["wifi", "parking"]);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const toggleAmenity = (k: string) =>
     setAmenities((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k]));
+
+  const pickImages = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      setError("Rasmlarga ruxsat bering");
+      return;
+    }
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      quality: 0.7,
+    });
+    if (res.canceled) return;
+    setUploading(true);
+    setError(null);
+    try {
+      for (const asset of res.assets) {
+        const { url } = await uploadImage(asset.uri);
+        setPhotos((p) => [...p, url]);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Rasm yuklashda xato");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = (url: string) => setPhotos((p) => p.filter((x) => x !== url));
 
   const submit = async () => {
     if (!title.trim() || !city.trim() || !price) {
@@ -68,7 +101,7 @@ export default function NewListingScreen() {
         stars,
         basePrice: Number(price),
         amenities,
-        photos: [DEFAULT_PHOTO],
+        photos: photos.length ? photos : [DEFAULT_PHOTO],
       });
       router.back();
     } catch (e) {
@@ -84,6 +117,32 @@ export default function NewListingScreen() {
         <Field label="Mehmonxona nomi" icon="business-outline" value={title} onChangeText={setTitle} placeholder="Masalan: Grand Hotel" />
         <Field label="Shahar" icon="location-outline" value={city} onChangeText={setCity} placeholder="Toshkent" />
         <Field label="Tuman / mo'ljal" icon="navigate-outline" value={district} onChangeText={setDistrict} placeholder="Yunusobod tumani" />
+
+        <Text weight="medium" className="mb-2 text-[12.5px] text-muted">Rasmlar</Text>
+        <View className="mb-4 flex-row flex-wrap" style={{ gap: 10 }}>
+          {photos.map((url) => (
+            <View key={url} style={{ width: 90, height: 90 }}>
+              <Image source={{ uri: url }} style={{ width: 90, height: 90, borderRadius: 14 }} contentFit="cover" />
+              <Pressable onPress={() => removePhoto(url)} hitSlop={6} style={{ position: "absolute", top: -7, right: -7, backgroundColor: colors.white, borderRadius: 11 }}>
+                <Ionicons name="close-circle" size={22} color={colors.danger} />
+              </Pressable>
+            </View>
+          ))}
+          <Pressable
+            onPress={pickImages}
+            disabled={uploading}
+            style={{ width: 90, height: 90, borderRadius: 14, borderWidth: 1.5, borderStyle: "dashed", borderColor: colors.line, alignItems: "center", justifyContent: "center", backgroundColor: colors.surface }}
+          >
+            {uploading ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="camera-outline" size={24} color={colors.primary} />
+                <Text className="mt-1 text-[10.5px] text-muted">Yuklash</Text>
+              </>
+            )}
+          </Pressable>
+        </View>
 
         <Text weight="medium" className="mb-1.5 text-[12.5px] text-muted">Yulduzlar</Text>
         <View className="mb-4 flex-row" style={{ gap: 8 }}>

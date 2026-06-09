@@ -112,3 +112,27 @@ export const api = {
   delete: <T>(path: string, opts?: RequestOptions) =>
     apiFetch<T>(path, { ...opts, method: "DELETE" }),
 };
+
+/** Rasm yuklash — lokal URI'dan serverga (multipart). URL qaytaradi. */
+export async function uploadImage(uri: string): Promise<{ url: string }> {
+  const token = useAuthStore.getState().tokens?.accessToken;
+  const name = uri.split("/").pop() || "photo.jpg";
+  const extMatch = /\.(\w+)$/.exec(name.toLowerCase());
+  const ext = extMatch ? extMatch[1] : "jpg";
+  const type = `image/${ext === "jpg" ? "jpeg" : ext}`;
+
+  const form = new FormData();
+  // React Native FormData fayl obyekti
+  form.append("file", { uri, name, type } as unknown as Blob);
+
+  const res = await fetch(`${BASE_URL}/uploads`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: form,
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new ApiError(res.status, t || "Rasm yuklashda xato");
+  }
+  return (await res.json()) as { url: string };
+}

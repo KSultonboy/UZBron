@@ -25,7 +25,13 @@
       "expo-router",
       "expo-secure-store",
       "expo-localization",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "UZBron mehmonxona rasmlarini yuklash uchun galereyaga ruxsat so'raydi."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
