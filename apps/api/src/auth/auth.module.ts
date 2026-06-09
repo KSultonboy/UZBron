@@ -9,6 +9,6 @@ import { MailService } from "./mail.service";
   imports: [JwtModule.register({})],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard, MailService],
-  exports: [JwtAuthGuard, JwtModule],
+  exports: [JwtAuthGuard, JwtModule, AuthService],
 })
 export class AuthModule {}

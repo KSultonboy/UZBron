@@ -10,6 +10,7 @@ import { FavoritesModule } from "./favorites/favorites.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { VendorModule } from "./vendor/vendor.module";
 import { UploadsModule } from "./uploads/uploads.module";
+import { AdminModule } from "./admin/admin.module";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { UploadsModule } from "./uploads/uploads.module";
     ReviewsModule,
     VendorModule,
     UploadsModule,
+    AdminModule,
   ],
   controllers: [HealthController],
 })

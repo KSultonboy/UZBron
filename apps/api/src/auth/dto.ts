@@ -61,6 +61,10 @@ export class CreateBusinessDto {
   @IsString()
   @Length(2, 120)
   businessName?: string;
+
+  @IsOptional()
+  @IsIn(["VENDOR", "ADMIN"])
+  role?: "VENDOR" | "ADMIN";
 }
 
 export class GoogleSignInDto {

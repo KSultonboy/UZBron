@@ -242,34 +242,49 @@ export class AuthService {
     return { user: this.publicUser(user), tokens };
   }
 
-  /** Admin: biznes/agentlik akkauntini email+parol bilan yaratish (x-admin-secret bilan). */
+  /** Biznes/agentlik (yoki admin) akkauntini email+parol bilan yaratish. */
+  async createBusinessAccount(dto: {
+    email: string;
+    password: string;
+    name?: string;
+    businessName?: string;
+    role?: "VENDOR" | "ADMIN";
+  }) {
+    const e = dto.email.trim().toLowerCase();
+    if (dto.password.length < 6) throw new BadRequestException("Parol kamida 6 belgidan iborat bo'lsin");
+    const passwordHash = await this.hashPassword(dto.password);
+    const role = dto.role === "ADMIN" ? "ADMIN" : "VENDOR";
+
+    const user = await this.prisma.user.upsert({
+      where: { email: e },
+      update: { passwordHash, role, ...(dto.name ? { name: dto.name } : {}) },
+      create: { email: e, passwordHash, role, name: dto.name ?? null },
+    });
+    // Admin uchun vendor yozuvi kerak emas
+    if (role === "VENDOR") {
+      await this.prisma.vendor.upsert({
+        where: { ownerId: user.id },
+        update: { name: dto.businessName ?? dto.name ?? "Biznes", status: "APPROVED" },
+        create: {
+          ownerId: user.id,
+          name: dto.businessName ?? dto.name ?? "Biznes",
+          status: "APPROVED",
+        },
+      });
+    }
+    return { ok: true, userId: user.id, email: e, role };
+  }
+
+  /** x-admin-secret bilan biznes/admin akkaunt yaratish (bootstrap uchun). */
   async createBusiness(
     secret: string | undefined,
-    dto: { email: string; password: string; name?: string; businessName?: string },
+    dto: { email: string; password: string; name?: string; businessName?: string; role?: "VENDOR" | "ADMIN" },
   ) {
     const adminSecret = this.config.get<string>("ADMIN_SECRET");
     if (!adminSecret || secret !== adminSecret) {
       throw new UnauthorizedException("Ruxsat yo'q");
     }
-    const e = dto.email.trim().toLowerCase();
-    if (dto.password.length < 6) throw new BadRequestException("Parol kamida 6 belgidan iborat bo'lsin");
-    const passwordHash = await this.hashPassword(dto.password);
-
-    const user = await this.prisma.user.upsert({
-      where: { email: e },
-      update: { passwordHash, role: "VENDOR", ...(dto.name ? { name: dto.name } : {}) },
-      create: { email: e, passwordHash, role: "VENDOR", name: dto.name ?? null },
-    });
-    await this.prisma.vendor.upsert({
-      where: { ownerId: user.id },
-      update: { name: dto.businessName ?? dto.name ?? "Biznes", status: "APPROVED" },
-      create: {
-        ownerId: user.id,
-        name: dto.businessName ?? dto.name ?? "Biznes",
-        status: "APPROVED",
-      },
-    });
-    return { ok: true, userId: user.id, email: e };
+    return this.createBusinessAccount(dto);
   }
 
   private async issueTokens(sub: string, role: string, phone: string | null) {

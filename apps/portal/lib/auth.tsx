@@ -10,10 +10,19 @@ export interface PortalUser {
   role: string;
 }
 
+export interface PasswordLoginResult {
+  requiresEmailCode?: boolean;
+  email?: string;
+  devCode?: string;
+  ok?: boolean;
+}
+
 interface AuthState {
   user: PortalUser | null;
   loading: boolean;
   loginWithGoogle: (idToken: string) => Promise<void>;
+  loginWithPassword: (email: string, password: string) => Promise<PasswordLoginResult>;
+  verifyEmailCode: (email: string, code: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -44,13 +53,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user);
   };
 
+  const loginWithPassword = async (email: string, password: string): Promise<PasswordLoginResult> => {
+    const res = await api<{
+      requiresEmailCode?: boolean;
+      email?: string;
+      devCode?: string;
+      user?: PortalUser;
+      tokens?: { accessToken: string };
+    }>("/auth/login", { method: "POST", body: { email, password }, auth: false });
+    if (res.requiresEmailCode) {
+      return { requiresEmailCode: true, email: res.email, devCode: res.devCode };
+    }
+    if (res.tokens && res.user) {
+      setToken(res.tokens.accessToken);
+      setUser(res.user);
+      return { ok: true };
+    }
+    throw new Error("Kirishda xato");
+  };
+
+  const verifyEmailCode = async (email: string, code: string) => {
+    const res = await api<{ user: PortalUser; tokens: { accessToken: string } }>(
+      "/auth/login/email-verify",
+      { method: "POST", body: { email, code }, auth: false },
+    );
+    setToken(res.tokens.accessToken);
+    setUser(res.user);
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, loginWithGoogle, loginWithPassword, verifyEmailCode, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
