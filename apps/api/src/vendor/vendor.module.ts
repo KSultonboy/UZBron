@@ -1,11 +1,12 @@
 import {
-  Body, Controller, Get, Param, Patch, Post, UseGuards, Module, Injectable, NotFoundException,
+  Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Module, Injectable, NotFoundException,
 } from "@nestjs/common";
 import {
   IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min,
 } from "class-validator";
 import { Type } from "class-transformer";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuthModule } from "../auth/auth.module";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
@@ -32,6 +33,17 @@ export class AddUnitDto {
 
 export class UpdateBookingStatusDto {
   @IsIn(["CONFIRMED", "CANCELLED", "COMPLETED"]) status!: string;
+}
+
+export class UpdateListingDto {
+  @IsOptional() @IsString() title?: string;
+  @IsOptional() @IsString() city?: string;
+  @IsOptional() @IsString() district?: string;
+  @IsOptional() @IsString() description?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(5) stars?: number;
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0) basePrice?: number;
+  @IsOptional() @IsArray() @IsString({ each: true }) photos?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) amenities?: string[];
 }
 
 @Injectable()
@@ -121,6 +133,90 @@ export class VendorService {
     return { id: listing.id, ok: true };
   }
 
+  /** Bitta e'lon — tahrirlash formasi uchun. */
+  async getListing(userId: string, listingId: string) {
+    const vendor = await this.ensureVendor(userId);
+    const l = await this.prisma.listing.findFirst({
+      where: { id: listingId, vendorId: vendor.id },
+      include: { units: true },
+    });
+    if (!l) throw new NotFoundException("E'lon topilmadi");
+    const attrs = (l.attributes ?? {}) as {
+      stars?: number;
+      district?: string;
+      amenities?: string[];
+    };
+    const cheapest = [...l.units].sort((a, b) => Number(a.basePrice) - Number(b.basePrice))[0];
+    return {
+      id: l.id,
+      title: l.title,
+      city: l.city,
+      district: attrs.district ?? "",
+      description: l.description ?? "",
+      stars: attrs.stars ?? 3,
+      amenities: attrs.amenities ?? [],
+      photos: l.photos,
+      basePrice: cheapest ? Number(cheapest.basePrice) : 0,
+      status: l.status,
+      roomsCount: l.units.length,
+    };
+  }
+
+  async updateListing(userId: string, listingId: string, dto: UpdateListingDto) {
+    const vendor = await this.ensureVendor(userId);
+    const l = await this.prisma.listing.findFirst({
+      where: { id: listingId, vendorId: vendor.id },
+      include: { units: true },
+    });
+    if (!l) throw new NotFoundException("E'lon topilmadi");
+    const attrs = (l.attributes ?? {}) as Record<string, unknown>;
+
+    const data: Prisma.ListingUpdateInput = {};
+    if (dto.title !== undefined) data.title = dto.title;
+    if (dto.city !== undefined) data.city = dto.city;
+    if (dto.description !== undefined) data.description = dto.description;
+    if (dto.photos !== undefined) data.photos = dto.photos;
+
+    const newCity = dto.city ?? l.city;
+    const newDistrict = dto.district ?? (attrs.district as string) ?? "";
+    if (dto.city !== undefined || dto.district !== undefined) {
+      data.address = newDistrict ? `${newDistrict}, ${newCity}` : newCity;
+    }
+    data.attributes = {
+      ...attrs,
+      ...(dto.stars !== undefined ? { stars: dto.stars } : {}),
+      ...(dto.district !== undefined ? { district: dto.district } : {}),
+      ...(dto.amenities !== undefined ? { amenities: dto.amenities } : {}),
+    } as Prisma.InputJsonValue;
+
+    await this.prisma.listing.update({ where: { id: listingId }, data });
+
+    // Narx — eng arzon (asosiy) xonaga yoziladi
+    if (dto.basePrice !== undefined && l.units.length) {
+      const cheapest = [...l.units].sort((a, b) => Number(a.basePrice) - Number(b.basePrice))[0];
+      await this.prisma.bookableUnit.update({
+        where: { id: cheapest.id },
+        data: { basePrice: dto.basePrice },
+      });
+    }
+    return { ok: true };
+  }
+
+  async deleteListing(userId: string, listingId: string) {
+    const vendor = await this.ensureVendor(userId);
+    const l = await this.prisma.listing.findFirst({
+      where: { id: listingId, vendorId: vendor.id },
+    });
+    if (!l) throw new NotFoundException("E'lon topilmadi");
+    // bookings Listing'ga cascade emas — avval o'chiramiz. units/availability/reviews cascade.
+    await this.prisma.$transaction([
+      this.prisma.review.deleteMany({ where: { listingId } }),
+      this.prisma.booking.deleteMany({ where: { listingId } }),
+      this.prisma.listing.delete({ where: { id: listingId } }),
+    ]);
+    return { ok: true };
+  }
+
   async addUnit(userId: string, listingId: string, dto: AddUnitDto) {
     const vendor = await this.ensureVendor(userId);
     const listing = await this.prisma.listing.findFirst({
@@ -203,6 +299,21 @@ export class VendorController {
   @Post("listings")
   create(@CurrentUser() u: CurrentUserData, @Body() dto: CreateListingDto) {
     return this.vendor.createListing(u.id, dto);
+  }
+
+  @Get("listings/:id")
+  getListing(@CurrentUser() u: CurrentUserData, @Param("id") id: string) {
+    return this.vendor.getListing(u.id, id);
+  }
+
+  @Patch("listings/:id")
+  updateListing(@CurrentUser() u: CurrentUserData, @Param("id") id: string, @Body() dto: UpdateListingDto) {
+    return this.vendor.updateListing(u.id, id, dto);
+  }
+
+  @Delete("listings/:id")
+  deleteListing(@CurrentUser() u: CurrentUserData, @Param("id") id: string) {
+    return this.vendor.deleteListing(u.id, id);
   }
 
   @Post("listings/:id/units")

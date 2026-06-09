@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { BedDouble, Building2, CalendarDays, MapPin, Plus, Search } from "lucide-react";
+import { BedDouble, Building2, CalendarDays, Loader2, MapPin, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { PARTNER_LISTINGS } from "@/lib/portal-paths";
 
@@ -26,12 +26,28 @@ export default function PartnerListingsPage() {
   const [items, setItems] = useState<VendorListing[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     api<{ items: VendorListing[] }>("/vendor/listings")
       .then((data) => setItems(data.items))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleDelete = async (item: VendorListing) => {
+    if (!window.confirm(`"${item.title}" e'loni va unga bog'liq bronlar butunlay o'chiriladi. Davom etasizmi?`)) {
+      return;
+    }
+    setDeletingId(item.id);
+    try {
+      await api(`/vendor/listings/${item.id}`, { method: "DELETE" });
+      setItems((prev) => prev.filter((x) => x.id !== item.id));
+    } catch {
+      window.alert("O'chirishda xato yuz berdi.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const visible = items.filter((item) =>
     `${item.title} ${item.city}`.toLocaleLowerCase("uz").includes(query.toLocaleLowerCase("uz")),
@@ -117,6 +133,24 @@ export default function PartnerListingsPage() {
                   <CalendarDays size={15} />
                   <span><b className="text-ink">{item.bookingsCount}</b> bron</span>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 divide-x divide-line border-t border-line">
+                <Link
+                  href={`${PARTNER_LISTINGS}/${item.id}/edit`}
+                  className="flex items-center justify-center gap-2 py-3 text-xs font-semibold text-primary transition hover:bg-primary-50"
+                >
+                  <Pencil size={15} />
+                  Tahrirlash
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(item)}
+                  disabled={deletingId === item.id}
+                  className="flex items-center justify-center gap-2 py-3 text-xs font-semibold text-muted transition hover:bg-red-50 hover:text-danger disabled:opacity-50"
+                >
+                  {deletingId === item.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                  O&apos;chirish
+                </button>
               </div>
             </article>
           ))}
