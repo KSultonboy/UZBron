@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowRight,
@@ -31,6 +32,9 @@ import {
 import { API_BASE } from "@/lib/config";
 import { CITY_CARDS, FALLBACK_HOTELS, type PublicHotel } from "@/lib/public-listings";
 import { CountUp, EASE, Reveal, Stagger, staggerItem } from "@/components/motion";
+
+// 3D hero — faqat klientda (WebGL), katta ekranlarda.
+const Hero3D = dynamic(() => import("@/components/hero-3d"), { ssr: false });
 
 const categories = [
   { key: "hotel", label: "Mehmonxona", icon: BedDouble, active: true },
@@ -173,8 +177,13 @@ export function PublicSite() {
             style={{ background: "radial-gradient(circle, rgba(234,179,8,0.22), transparent 70%)" }}
           />
 
+          {/* 3D suzuvchi telefon — buyurtma oqimi (lg+) */}
+          <div className="pointer-events-none absolute bottom-0 right-[1%] top-0 z-[1] hidden w-[44%] lg:block">
+            <Hero3D />
+          </div>
+
           <motion.div
-            className="relative mx-auto w-full max-w-7xl px-5 lg:px-8"
+            className="relative z-[2] mx-auto w-full max-w-7xl px-5 lg:px-8"
             variants={heroContainer}
             initial="hidden"
             animate="show"
