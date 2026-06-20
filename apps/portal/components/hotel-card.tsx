@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { MapPin, Star } from "lucide-react";
 import type { PublicHotel } from "@/lib/public-listings";
 
@@ -8,7 +9,9 @@ const FALLBACK_IMG =
 export function HotelCard({ hotel }: { hotel: PublicHotel }) {
   const photo = hotel.photos?.[0] ?? FALLBACK_IMG;
   return (
-    <article className="group overflow-hidden rounded-xl border border-line bg-white shadow-[0_8px_24px_rgba(11,26,61,0.07)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(11,26,61,0.16)]">
+    <Link
+      href={`/mehmonxonalar/${hotel.id}`}
+      className="group block overflow-hidden rounded-xl border border-line bg-white shadow-[0_8px_24px_rgba(11,26,61,0.07)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(11,26,61,0.16)]">
       <div className="relative aspect-[4/3] overflow-hidden bg-line">
         <Image
           src={photo}
@@ -47,6 +50,6 @@ export function HotelCard({ hotel }: { hotel: PublicHotel }) {
           </div>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
