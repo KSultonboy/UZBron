@@ -226,6 +226,30 @@ export class AuthService {
     return { user: this.publicUser(user), tokens };
   }
 
+  /** Oddiy foydalanuvchi (CUSTOMER) email + parol bilan ro'yxatdan o'tishi → tokenlar. */
+  async registerWithPassword(email: string, password: string, name?: string) {
+    const e = email.trim().toLowerCase();
+    if (password.length < 6) throw new BadRequestException("Parol kamida 6 belgidan iborat bo'lsin");
+
+    const existing = await this.prisma.user.findUnique({ where: { email: e } });
+    if (existing?.passwordHash) {
+      throw new BadRequestException("Bu email allaqachon ro'yxatdan o'tgan");
+    }
+
+    const passwordHash = await this.hashPassword(password);
+    const user = existing
+      ? await this.prisma.user.update({
+          where: { id: existing.id },
+          data: { passwordHash, ...(name ? { name } : {}) },
+        })
+      : await this.prisma.user.create({
+          data: { email: e, passwordHash, name: name ?? null, role: "CUSTOMER" },
+        });
+
+    const tokens = await this.issueTokens(user.id, user.role, user.phone);
+    return { user: this.publicUser(user), tokens };
+  }
+
   /** Biznes 2FA: emailga yuborilgan kodni tasdiqlash → tokenlar. */
   async verifyEmailCode(email: string, code: string) {
     const e = email.trim().toLowerCase();

@@ -7,6 +7,7 @@ import { Building2, CalendarCheck, ChartNoAxesCombined, ShieldCheck } from "luci
 import { useAuth } from "@/lib/auth";
 import { GOOGLE_CLIENT_ID } from "@/lib/config";
 import { PARTNER_DASHBOARD } from "@/lib/portal-paths";
+import { EmailAuthForm } from "@/components/email-auth-form";
 
 declare global {
   interface Window {
@@ -135,7 +136,15 @@ export function PartnerLogin() {
             Tasdiqlangan agentlik yoki biznes hisobingiz bilan davom eting.
           </p>
 
-          <div className="mt-8 min-h-11">
+          <div className="mt-6">
+            <EmailAuthForm allowRegister={false} />
+          </div>
+
+          <div className="my-5 flex items-center gap-3 text-xs font-medium text-subtle">
+            <span className="h-px flex-1 bg-line" /> yoki <span className="h-px flex-1 bg-line" />
+          </div>
+
+          <div className="min-h-11">
             {loading ? (
               <div className="h-11 animate-pulse rounded-lg bg-canvas" />
             ) : (

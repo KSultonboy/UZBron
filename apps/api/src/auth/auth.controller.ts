@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import {
   RequestOtpDto, VerifyOtpDto, RefreshDto, GoogleSignInDto, UpdateMeDto,
-  LoginDto, EmailVerifyDto, CreateBusinessDto,
+  LoginDto, EmailVerifyDto, CreateBusinessDto, RegisterDto,
 } from "./dto";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { CurrentUser, type CurrentUserData } from "./current-user.decorator";
@@ -26,6 +26,11 @@ export class AuthController {
   @Post("google")
   google(@Body() dto: GoogleSignInDto) {
     return this.auth.googleSignIn(dto.idToken);
+  }
+
+  @Post("register")
+  register(@Body() dto: RegisterDto) {
+    return this.auth.registerWithPassword(dto.email, dto.password, dto.name);
   }
 
   @Post("login")

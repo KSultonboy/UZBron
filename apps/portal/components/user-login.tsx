@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { GOOGLE_CLIENT_ID } from "@/lib/config";
 import { PARTNER_DASHBOARD } from "@/lib/portal-paths";
+import { EmailAuthForm } from "@/components/email-auth-form";
 
 const CUSTOMER_HOME = "/bronlarim";
 type Intent = "user" | "partner";
@@ -56,8 +57,6 @@ export function UserLogin() {
   useEffect(() => {
     if (loading || user || !intent) return;
 
-    const dest = intent === "partner" ? PARTNER_DASHBOARD : CUSTOMER_HOME;
-
     const initialize = () => {
       if (!window.google?.accounts?.id || !buttonRef.current) return false;
       window.google.accounts.id.initialize({
@@ -65,8 +64,8 @@ export function UserLogin() {
         callback: async ({ credential }) => {
           try {
             setError(null);
-            await loginWithGoogle(credential);
-            router.replace(dest);
+            const u = await loginWithGoogle(credential);
+            router.replace(autoDest(u.role));
           } catch {
             setError("Kirishda xato yuz berdi. Qayta urinib ko'ring.");
           }
@@ -184,11 +183,19 @@ export function UserLogin() {
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted">
                 {intent === "partner"
-                  ? "Tasdiqlangan biznes hisobingiz bilan Google orqali davom eting."
-                  : "Bronlaringizni ko'rish uchun Google orqali davom eting."}
+                  ? "Tasdiqlangan biznes hisobingiz bilan davom eting."
+                  : "Email yoki Google orqali kiring va bronlaringizni ko'ring."}
               </p>
 
-              <div className="mt-8 min-h-11">
+              <div className="mt-6">
+                <EmailAuthForm allowRegister={intent === "user"} />
+              </div>
+
+              <div className="my-5 flex items-center gap-3 text-xs font-medium text-subtle">
+                <span className="h-px flex-1 bg-line" /> yoki <span className="h-px flex-1 bg-line" />
+              </div>
+
+              <div className="min-h-11">
                 <div ref={buttonRef} className="flex w-full justify-center overflow-hidden" />
               </div>
 

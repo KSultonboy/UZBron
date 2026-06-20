@@ -44,6 +44,20 @@ export class EmailVerifyDto {
   code!: string;
 }
 
+export class RegisterDto {
+  @IsEmail({}, { message: "Email noto'g'ri" })
+  email!: string;
+
+  @IsString()
+  @Length(6, 100, { message: "Parol kamida 6 belgi" })
+  password!: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 60)
+  name?: string;
+}
+
 export class CreateBusinessDto {
   @IsEmail()
   email!: string;

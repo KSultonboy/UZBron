@@ -22,7 +22,8 @@ interface AuthState {
   loading: boolean;
   loginWithGoogle: (idToken: string) => Promise<PortalUser>;
   loginWithPassword: (email: string, password: string) => Promise<PasswordLoginResult>;
-  verifyEmailCode: (email: string, code: string) => Promise<void>;
+  registerWithPassword: (email: string, password: string, name: string) => Promise<PortalUser>;
+  verifyEmailCode: (email: string, code: string) => Promise<PortalUser>;
   logout: () => void;
 }
 
@@ -73,13 +74,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     throw new Error("Kirishda xato");
   };
 
-  const verifyEmailCode = async (email: string, code: string) => {
+  const registerWithPassword = async (email: string, password: string, name: string): Promise<PortalUser> => {
+    const res = await api<{ user: PortalUser; tokens: { accessToken: string } }>(
+      "/auth/register",
+      { method: "POST", body: { email, password, name }, auth: false },
+    );
+    setToken(res.tokens.accessToken);
+    setUser(res.user);
+    return res.user;
+  };
+
+  const verifyEmailCode = async (email: string, code: string): Promise<PortalUser> => {
     const res = await api<{ user: PortalUser; tokens: { accessToken: string } }>(
       "/auth/login/email-verify",
       { method: "POST", body: { email, code }, auth: false },
     );
     setToken(res.tokens.accessToken);
     setUser(res.user);
+    return res.user;
   };
 
   const logout = () => {
@@ -89,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, loginWithGoogle, loginWithPassword, verifyEmailCode, logout }}
+      value={{ user, loading, loginWithGoogle, loginWithPassword, registerWithPassword, verifyEmailCode, logout }}
     >
       {children}
     </AuthContext.Provider>
