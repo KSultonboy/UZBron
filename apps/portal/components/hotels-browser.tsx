@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { MapPin, Search, SlidersHorizontal } from "lucide-react";
 import { API_BASE } from "@/lib/config";
 import { FALLBACK_HOTELS, type PublicHotel } from "@/lib/public-listings";
 import { HotelCard } from "@/components/hotel-card";
+import { UZ_CITIES, UZ_REGIONS, citiesOfRegion, regionOfCity } from "@/lib/uz-regions";
 
 type SortKey = "rating" | "price-asc" | "price-desc";
 
@@ -12,7 +13,8 @@ export function HotelsBrowser() {
   const [hotels, setHotels] = useState<PublicHotel[]>(FALLBACK_HOTELS);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [city, setCity] = useState<string>("Barchasi");
+  const [region, setRegion] = useState<string>("");
+  const [city, setCity] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("rating");
 
   useEffect(() => {
@@ -31,21 +33,28 @@ export function HotelsBrowser() {
     };
   }, []);
 
-  const cities = useMemo(() => {
-    const set = new Set(hotels.map((h) => h.city).filter(Boolean));
-    return ["Barchasi", ...Array.from(set).sort()];
-  }, [hotels]);
+  // Tanlangan viloyatga qarab shahar variantlari
+  const cityOptions = useMemo(
+    () => (region ? citiesOfRegion(region) : UZ_CITIES),
+    [region],
+  );
+
+  const onRegionChange = (name: string) => {
+    setRegion(name);
+    setCity(""); // viloyat o'zgarsa shahar tanlovi tozalanadi
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = hotels.filter((h) => {
-      const matchCity = city === "Barchasi" || h.city === city;
+      const matchRegion = !region || regionOfCity(h.city)?.name === region;
+      const matchCity = !city || h.city === city;
       const matchQuery =
         !q ||
         h.title.toLowerCase().includes(q) ||
         h.city.toLowerCase().includes(q) ||
         h.district.toLowerCase().includes(q);
-      return matchCity && matchQuery;
+      return matchRegion && matchCity && matchQuery;
     });
     list = [...list].sort((a, b) => {
       if (sort === "price-asc") return a.price - b.price;
@@ -53,7 +62,7 @@ export function HotelsBrowser() {
       return b.rating - a.rating;
     });
     return list;
-  }, [hotels, query, city, sort]);
+  }, [hotels, query, region, city, sort]);
 
   return (
     <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8">
@@ -83,21 +92,30 @@ export function HotelsBrowser() {
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          {cities.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCity(c)}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
-                city === c
-                  ? "bg-[#0b1a3d] text-white"
-                  : "border border-line bg-white text-muted hover:border-primary hover:text-ink"
-              }`}
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="relative">
+            <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
+            <select
+              value={region}
+              onChange={(e) => onRegionChange(e.target.value)}
+              className="h-11 w-full rounded-lg border border-line bg-canvas pl-9 pr-3 text-sm font-medium text-ink outline-none transition focus:border-primary focus:bg-white"
             >
-              {c}
-            </button>
-          ))}
+              <option value="">Barcha viloyatlar</option>
+              {UZ_REGIONS.map((r) => (
+                <option key={r.name} value={r.name}>{r.name}</option>
+              ))}
+            </select>
+          </div>
+          <select
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="h-11 w-full rounded-lg border border-line bg-canvas px-3 text-sm font-medium text-ink outline-none transition focus:border-primary focus:bg-white"
+          >
+            <option value="">{region ? "Barcha shaharlar" : "Shahar (barchasi)"}</option>
+            {cityOptions.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
       </div>
 

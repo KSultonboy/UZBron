@@ -1,12 +1,13 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, BedDouble, Building2, Check, ChevronRight, ImagePlus, Loader2, Save, Star, Upload, X } from "lucide-react";
 import { api, uploadFile } from "@/lib/api";
 import { PARTNER_LISTINGS } from "@/lib/portal-paths";
+import { UZ_REGIONS, citiesOfRegion, regionOfCity } from "@/lib/uz-regions";
 
 const amenityOptions = [
   { key: "wifi", label: "Bepul Wi-Fi" },
@@ -43,6 +44,20 @@ export function ListingForm({
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(initial?.amenities ?? ["wifi"]);
   const [photos, setPhotos] = useState<string[]>(initial?.photos ?? []);
   const [uploading, setUploading] = useState(false);
+
+  const initialRegion = regionOfCity(initial?.city)?.name ?? UZ_REGIONS[0].name;
+  const [region, setRegion] = useState(initialRegion);
+  const [city, setCity] = useState(initial?.city ?? citiesOfRegion(initialRegion)[0] ?? "");
+
+  const cityOptions = useMemo(() => {
+    const list = citiesOfRegion(region);
+    return city && !list.includes(city) ? [city, ...list] : list;
+  }, [region, city]);
+
+  const onRegionChange = (name: string) => {
+    setRegion(name);
+    setCity(citiesOfRegion(name)[0] ?? "");
+  };
 
   const onPickFiles = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -150,8 +165,19 @@ export function ListingForm({
                 ))}
               </select>
             </Field>
+            <Field label="Viloyat" required>
+              <select value={region} onChange={(e) => onRegionChange(e.target.value)} className="form-input">
+                {UZ_REGIONS.map((r) => (
+                  <option key={r.name} value={r.name}>{r.name}</option>
+                ))}
+              </select>
+            </Field>
             <Field label="Shahar" required>
-              <input name="city" required defaultValue={initial?.city} className="form-input" placeholder="Toshkent" />
+              <select name="city" required value={city} onChange={(e) => setCity(e.target.value)} className="form-input">
+                {cityOptions.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </Field>
             <Field label="Tuman yoki manzil">
               <input name="district" defaultValue={initial?.district} className="form-input" placeholder="Shayxontohur tumani" />
@@ -170,7 +196,6 @@ export function ListingForm({
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted">so&apos;m</span>
               </div>
             </Field>
-            <div className="hidden sm:block" />
             <Field label="Tavsif" className="sm:col-span-2">
               <textarea
                 name="description"
