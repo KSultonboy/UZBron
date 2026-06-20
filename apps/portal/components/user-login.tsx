@@ -2,45 +2,33 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, CalendarCheck, ChartNoAxesCombined, ShieldCheck } from "lucide-react";
+import { CalendarCheck, Heart, ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { GOOGLE_CLIENT_ID } from "@/lib/config";
 import { PARTNER_DASHBOARD } from "@/lib/portal-paths";
 
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        id?: {
-          initialize: (options: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-          }) => void;
-          renderButton: (
-            element: HTMLElement,
-            options: Record<string, string | number>,
-          ) => void;
-        };
-      };
-    };
-  }
+const CUSTOMER_HOME = "/bronlarim";
+
+function destForRole(role: string) {
+  return role === "VENDOR" || role === "ADMIN" ? PARTNER_DASHBOARD : CUSTOMER_HOME;
 }
 
-const portalBenefits = [
-  { icon: Building2, text: "Mehmonxonalar va xonalarni boshqarish" },
-  { icon: CalendarCheck, text: "Kelgan bronlarni real vaqtda kuzatish" },
-  { icon: ChartNoAxesCombined, text: "Asosiy biznes ko'rsatkichlarini ko'rish" },
+const benefits = [
+  { icon: CalendarCheck, text: "Barcha bronlaringizni bir joyda ko'ring" },
+  { icon: Heart, text: "Yoqtirgan mehmonxonalaringizni saqlang" },
+  { icon: Sparkles, text: "Tez, qulay va xavfsiz kirish" },
 ];
 
-export function PartnerLogin() {
+export function UserLogin() {
   const router = useRouter();
   const { user, loading, loginWithGoogle } = useAuth();
   const buttonRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && user) router.replace(PARTNER_DASHBOARD);
+    if (!loading && user) router.replace(destForRole(user.role));
   }, [loading, user, router]);
 
   useEffect(() => {
@@ -53,8 +41,8 @@ export function PartnerLogin() {
         callback: async ({ credential }) => {
           try {
             setError(null);
-            await loginWithGoogle(credential);
-            router.replace(PARTNER_DASHBOARD);
+            const u = await loginWithGoogle(credential);
+            router.replace(destForRole(u.role));
           } catch {
             setError("Kirishda xato yuz berdi. Qayta urinib ko'ring.");
           }
@@ -80,11 +68,9 @@ export function PartnerLogin() {
 
   return (
     <main className="grid min-h-screen bg-white lg:grid-cols-[1.08fr_.92fr]">
-      <section
-        className="relative hidden min-h-screen overflow-hidden p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14"
-      >
+      <section className="relative hidden min-h-screen overflow-hidden p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
         <Image
-          src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1600&q=90"
+          src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=90"
           alt=""
           fill
           priority
@@ -93,20 +79,19 @@ export function PartnerLogin() {
         />
         <div className="absolute inset-0 bg-gradient-to-br from-[#0b1a3d]/96 via-[#0b1a3d]/88 to-[#0b1a3d]/72" />
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0b1a3d] to-transparent" />
-        <div className="relative text-xl font-bold">
+        <Link href="/" className="relative text-xl font-bold">
           UZ<span className="text-gold-light">Bron</span>
-          <span className="ml-2 text-sm font-medium text-white/65">Partner</span>
-        </div>
+        </Link>
         <div className="relative max-w-xl" style={{ textShadow: "0 2px 16px rgba(3,7,18,0.45)" }}>
-          <p className="text-sm font-semibold text-gold-light">Biznes boshqaruvi</p>
+          <p className="text-sm font-semibold text-gold-light">Xush kelibsiz</p>
           <h1 className="mt-3 text-4xl font-bold leading-tight xl:text-5xl">
-            Mehmonxonangizni bitta paneldan boshqaring
+            Sayohatlaringizni bitta hisobda boshqaring
           </h1>
           <p className="mt-5 max-w-lg leading-7 text-white/85">
-            E&apos;lonlar, xonalar, narxlar va bronlar uchun tez, tushunarli va xavfsiz ish maydoni.
+            Bron qiling, kuzating va sevimlilaringizni saqlang — barchasi UZBron hisobingizda.
           </p>
           <div className="mt-9 grid gap-4">
-            {portalBenefits.map(({ icon: Icon, text }) => (
+            {benefits.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3 text-sm font-medium text-white/90">
                 <div className="grid h-9 w-9 place-items-center rounded-lg bg-white/12">
                   <Icon size={18} />
@@ -116,23 +101,22 @@ export function PartnerLogin() {
             ))}
           </div>
         </div>
-        <div className="relative text-xs text-white/45">© 2026 UZBron Partner</div>
+        <div className="relative text-xs text-white/45">© 2026 UZBron</div>
       </section>
 
       <section className="flex min-h-screen items-center justify-center bg-canvas px-5 py-12">
         <div className="w-full max-w-md rounded-lg border border-line bg-white p-7 shadow-[0_18px_55px_rgba(11,26,61,0.09)] sm:p-9">
           <div className="mb-8 lg:hidden">
-            <div className="text-xl font-bold text-primary">
+            <Link href="/" className="text-xl font-bold text-primary">
               UZ<span className="text-gold">Bron</span>
-              <span className="ml-2 text-sm font-medium text-muted">Partner</span>
-            </div>
+            </Link>
           </div>
           <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary-50 text-primary">
             <ShieldCheck size={22} />
           </div>
-          <h2 className="mt-5 text-2xl font-bold">Partner paneliga kirish</h2>
+          <h2 className="mt-5 text-2xl font-bold">Hisobingizga kirish</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Tasdiqlangan agentlik yoki biznes hisobingiz bilan davom eting.
+            Bronlaringizni ko&apos;rish uchun Google orqali davom eting.
           </p>
 
           <div className="mt-8 min-h-11">
@@ -148,7 +132,15 @@ export function PartnerLogin() {
           )}
 
           <p className="mt-8 border-t border-line pt-5 text-xs leading-5 text-subtle">
-            Ushbu sahifa faqat UZBron hamkorlari uchun. Kirish orqali platforma shartlariga rozilik bildirasiz.
+            Hamkor yoki agentlik hisobi bilan kirsangiz, avtomatik biznes paneliga yo&apos;naltirilasiz. Kirish orqali{" "}
+            <Link href="/shartlar" className="text-primary underline">
+              shartlar
+            </Link>{" "}
+            va{" "}
+            <Link href="/maxfiylik" className="text-primary underline">
+              maxfiylik siyosati
+            </Link>
+            ga rozilik bildirasiz.
           </p>
         </div>
       </section>

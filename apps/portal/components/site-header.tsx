@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, UserRound, X } from "lucide-react";
+import { CalendarDays, LayoutDashboard, LogOut, Menu, UserRound, X } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { PARTNER_DASHBOARD } from "@/lib/portal-paths";
 
 const NAV: { label: string; href: string }[] = [
   { label: "Mehmonxonalar", href: "/mehmonxonalar" },
@@ -15,8 +17,20 @@ const NAV: { label: string; href: string }[] = [
 /** Inner-sahifalar uchun solid, sticky header. */
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  const isPartner = user?.role === "VENDOR" || user?.role === "ADMIN";
+  const accountHref = !user ? "/kirish" : isPartner ? PARTNER_DASHBOARD : "/bronlarim";
+  const accountLabel = !user ? "Kirish" : isPartner ? "Panel" : "Bronlarim";
+  const AccountIcon = !user ? UserRound : isPartner ? LayoutDashboard : CalendarDays;
+
+  const signOut = () => {
+    logout();
+    router.replace("/");
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -56,12 +70,23 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/uzbron-partner-7f3"
+            href={accountHref}
             className="hidden items-center gap-2 rounded-lg bg-[#0b1a3d] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#13265a] sm:flex"
           >
-            <UserRound size={17} />
-            Kirish
+            <AccountIcon size={17} />
+            {accountLabel}
           </Link>
+          {user && (
+            <button
+              type="button"
+              onClick={signOut}
+              className="hidden h-10 w-10 place-items-center rounded-lg border border-line text-muted transition hover:text-danger sm:grid"
+              aria-label="Chiqish"
+              title="Chiqish"
+            >
+              <LogOut size={17} />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -86,11 +111,20 @@ export function SiteHeader() {
               </Link>
             ))}
             <Link
-              href="/uzbron-partner-7f3"
+              href={accountHref}
               className="mt-3 mb-2 flex items-center justify-center gap-2 rounded-lg bg-[#0b1a3d] py-3 text-sm font-semibold text-white"
             >
-              <UserRound size={17} /> Biznes paneli — Kirish
+              <AccountIcon size={17} /> {accountLabel}
             </Link>
+            {user && (
+              <button
+                type="button"
+                onClick={signOut}
+                className="mb-2 flex items-center justify-center gap-2 rounded-lg border border-line py-3 text-sm font-semibold text-muted"
+              >
+                <LogOut size={16} /> Chiqish
+              </button>
+            )}
           </nav>
         </div>
       )}

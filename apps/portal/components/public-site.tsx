@@ -144,7 +144,7 @@ export function PublicSite() {
               <Bell size={19} />
             </button>
             <Link
-              href="/uzbron-partner-7f3"
+              href="/kirish"
               className="hidden items-center gap-2 rounded-lg border border-white/25 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 sm:flex"
             >
               <UserRound size={17} />

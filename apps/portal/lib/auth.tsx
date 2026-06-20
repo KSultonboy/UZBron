@@ -20,7 +20,7 @@ export interface PasswordLoginResult {
 interface AuthState {
   user: PortalUser | null;
   loading: boolean;
-  loginWithGoogle: (idToken: string) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<PortalUser>;
   loginWithPassword: (email: string, password: string) => Promise<PasswordLoginResult>;
   verifyEmailCode: (email: string, code: string) => Promise<void>;
   logout: () => void;
@@ -51,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     setToken(res.tokens.accessToken);
     setUser(res.user);
+    return res.user;
   };
 
   const loginWithPassword = async (email: string, password: string): Promise<PasswordLoginResult> => {
