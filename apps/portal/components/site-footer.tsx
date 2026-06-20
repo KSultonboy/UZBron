@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
@@ -31,8 +32,8 @@ export function SiteFooter() {
     <footer className="bg-[#0b1a3d] text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr] lg:px-8">
         <div>
-          <Link href="/" className="text-2xl font-bold">
-            UZ<span className="text-gold-light">Bron</span>
+          <Link href="/" aria-label="UZBron">
+            <Logo size={30} className="text-2xl text-white" bronClass="text-gold-light" />
           </Link>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/55">
             O&apos;zbekiston bo&apos;ylab mehmonxona va xizmatlarni bir joyda bron qilish platformasi.

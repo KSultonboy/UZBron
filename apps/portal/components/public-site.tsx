@@ -33,6 +33,7 @@ import { CITY_CARDS, FALLBACK_HOTELS, type PublicHotel } from "@/lib/public-list
 import Link from "next/link";
 import { CountUp, EASE, Reveal, Stagger, staggerItem } from "@/components/motion";
 import { SiteFooter } from "@/components/site-footer";
+import { Logo } from "@/components/logo";
 
 const categories = [
   { key: "hotel", label: "Mehmonxona", icon: BedDouble, active: true },
@@ -119,8 +120,8 @@ export function PublicSite() {
     <div className="min-h-screen bg-canvas pb-[calc(5.5rem+env(safe-area-inset-bottom))] text-ink md:pb-0">
       <header className="absolute inset-x-0 top-0 z-30 border-b border-white/15">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8">
-          <a href="#" className="text-xl font-bold text-white" aria-label="UZBron bosh sahifa">
-            UZ<span className="text-gold-light">Bron</span>
+          <a href="#" aria-label="UZBron bosh sahifa">
+            <Logo size={28} className="text-xl text-white" bronClass="text-gold-light" />
           </a>
           <nav className="hidden items-center gap-8 text-sm font-medium text-white/85 md:flex">
             {[

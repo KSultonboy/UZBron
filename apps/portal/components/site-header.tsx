@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CalendarDays, LayoutDashboard, LogOut, Menu, UserRound, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { Logo } from "@/components/logo";
 import { PARTNER_DASHBOARD } from "@/lib/portal-paths";
 
 const NAV: { label: string; href: string }[] = [
@@ -48,8 +49,8 @@ export function SiteHeader() {
       }`}
     >
       <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 lg:px-8">
-        <Link href="/" className="text-xl font-bold text-ink" aria-label="UZBron bosh sahifa">
-          UZ<span className="text-gold">Bron</span>
+        <Link href="/" aria-label="UZBron bosh sahifa">
+          <Logo size={26} className="text-xl text-ink" bronClass="text-gold" />
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-muted md:flex">
