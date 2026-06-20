@@ -27,6 +27,10 @@ class UpdateVendorStatusDto {
   @IsIn(["APPROVED", "PENDING", "BLOCKED"]) status!: "APPROVED" | "PENDING" | "BLOCKED";
 }
 
+class UpdateFeedbackStatusDto {
+  @IsIn(["NEW", "RESOLVED"]) status!: "NEW" | "RESOLVED";
+}
+
 /** Faqat ADMIN rolidagi foydalanuvchilarga ruxsat. */
 @Injectable()
 export class AdminGuard implements CanActivate {
@@ -117,6 +121,148 @@ export class AdminService {
   createBusiness(dto: CreateBusinessDto) {
     return this.auth.createBusinessAccount(dto);
   }
+
+  /** To'liq hisobot — daromad, komissiya, status bo'yicha bronlar, top mehmonxonalar. */
+  async reports() {
+    const PAID = ["CONFIRMED", "COMPLETED"] as const;
+    const [revenueAgg, statusGroups, topListings, recentCount] = await Promise.all([
+      this.prisma.booking.aggregate({
+        _sum: { totalPrice: true },
+        _count: true,
+        where: { status: { in: [...PAID] } },
+      }),
+      this.prisma.booking.groupBy({ by: ["status"], _count: true }),
+      this.prisma.booking.groupBy({
+        by: ["listingId"],
+        _count: true,
+        _sum: { totalPrice: true },
+        orderBy: { _count: { listingId: "desc" } },
+        take: 5,
+      }),
+      this.prisma.booking.count({
+        where: { createdAt: { gte: new Date(Date.now() - 30 * 86400000) } },
+      }),
+    ]);
+
+    const titles = await this.prisma.listing.findMany({
+      where: { id: { in: topListings.map((t) => t.listingId) } },
+      select: { id: true, title: true, city: true },
+    });
+    const titleMap = new Map(titles.map((t) => [t.id, t]));
+
+    const revenue = Number(revenueAgg._sum.totalPrice ?? 0);
+    return {
+      revenue,
+      commission: Math.round(revenue * 0.05),
+      paidBookings: revenueAgg._count,
+      last30dBookings: recentCount,
+      byStatus: statusGroups.map((g) => ({ status: g.status, count: g._count })),
+      topListings: topListings.map((t) => ({
+        id: t.listingId,
+        title: titleMap.get(t.listingId)?.title ?? "—",
+        city: titleMap.get(t.listingId)?.city ?? "",
+        bookings: t._count,
+        revenue: Number(t._sum.totalPrice ?? 0),
+      })),
+    };
+  }
+
+  async users() {
+    const users = await this.prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: { _count: { select: { bookings: true, reviews: true } } },
+    });
+    return {
+      items: users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        role: u.role,
+        bookingsCount: u._count.bookings,
+        reviewsCount: u._count.reviews,
+        createdAt: u.createdAt.toISOString().slice(0, 10),
+      })),
+    };
+  }
+
+  async bookings() {
+    const bookings = await this.prisma.booking.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        listing: { select: { title: true, city: true } },
+        customer: { select: { name: true, email: true, phone: true } },
+        unit: { select: { name: true } },
+      },
+    });
+    return {
+      items: bookings.map((b) => ({
+        id: b.id,
+        status: b.status,
+        listingTitle: b.listing.title,
+        city: b.listing.city,
+        unitName: b.unit.name,
+        customer: b.customer.name ?? b.customer.email ?? b.customer.phone ?? "—",
+        startDate: b.startDate.toISOString().slice(0, 10),
+        endDate: b.endDate ? b.endDate.toISOString().slice(0, 10) : null,
+        guests: b.guests,
+        totalPrice: Number(b.totalPrice),
+        createdAt: b.createdAt.toISOString().slice(0, 10),
+      })),
+    };
+  }
+
+  async reviews() {
+    const reviews = await this.prisma.review.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        listing: { select: { title: true } },
+        customer: { select: { name: true } },
+      },
+    });
+    return {
+      items: reviews.map((r) => ({
+        id: r.id,
+        listingTitle: r.listing.title,
+        author: r.customer.name ?? "Mehmon",
+        rating: r.rating,
+        comment: r.comment ?? "",
+        createdAt: r.createdAt.toISOString().slice(0, 10),
+      })),
+    };
+  }
+
+  async deleteReview(id: string) {
+    const r = await this.prisma.review.findUnique({ where: { id } });
+    if (!r) throw new NotFoundException("Sharh topilmadi");
+    await this.prisma.review.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  async feedback() {
+    const items = await this.prisma.feedback.findMany({ orderBy: { createdAt: "desc" }, take: 200 });
+    return {
+      items: items.map((f) => ({
+        id: f.id,
+        type: f.type,
+        name: f.name,
+        email: f.email,
+        message: f.message,
+        status: f.status,
+        createdAt: f.createdAt.toISOString().slice(0, 16).replace("T", " "),
+      })),
+    };
+  }
+
+  async setFeedbackStatus(id: string, status: "NEW" | "RESOLVED") {
+    const f = await this.prisma.feedback.findUnique({ where: { id } });
+    if (!f) throw new NotFoundException("Murojaat topilmadi");
+    await this.prisma.feedback.update({ where: { id }, data: { status } });
+    return { ok: true, status };
+  }
 }
 
 @ApiTags("admin")
@@ -154,6 +300,41 @@ export class AdminController {
   @Post("business")
   createBusiness(@Body() dto: CreateBusinessDto) {
     return this.admin.createBusiness(dto);
+  }
+
+  @Get("reports")
+  reports() {
+    return this.admin.reports();
+  }
+
+  @Get("users")
+  users() {
+    return this.admin.users();
+  }
+
+  @Get("bookings")
+  bookings() {
+    return this.admin.bookings();
+  }
+
+  @Get("reviews")
+  reviews() {
+    return this.admin.reviews();
+  }
+
+  @Delete("reviews/:id")
+  deleteReview(@Param("id") id: string) {
+    return this.admin.deleteReview(id);
+  }
+
+  @Get("feedback")
+  feedback() {
+    return this.admin.feedback();
+  }
+
+  @Patch("feedback/:id/status")
+  setFeedbackStatus(@Param("id") id: string, @Body() dto: UpdateFeedbackStatusDto) {
+    return this.admin.setFeedbackStatus(id, dto.status);
   }
 }
 

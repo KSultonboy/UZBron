@@ -12,6 +12,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { SitePage, PageHero } from "@/components/site-page";
+import { VendorApplyForm } from "@/components/vendor-apply-form";
 
 export const metadata: Metadata = {
   title: "Biznes uchun",
@@ -44,10 +45,10 @@ export default function BizneslarPage() {
       >
         <div className="flex flex-wrap gap-3">
           <Link
-            href="/uzbron-partner-7f3"
+            href="#ariza"
             className="inline-flex items-center gap-2 rounded-lg bg-gold px-6 py-3 text-sm font-semibold text-[#1a1206] transition hover:bg-gold-light"
           >
-            Bepul boshlash <ArrowRight size={18} />
+            Hamkor bo&apos;lish <ArrowRight size={18} />
           </Link>
           <Link
             href="/aloqa"
@@ -99,26 +100,25 @@ export default function BizneslarPage() {
         </div>
       </section>
 
-      {/* CTA banner */}
-      <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
-        <div className="relative overflow-hidden rounded-2xl bg-[#0b1a3d] px-8 py-14 text-center text-white">
-          <div
-            className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full blur-3xl"
-            style={{ background: "radial-gradient(circle, rgba(234,179,8,0.25), transparent 70%)" }}
-          />
-          <div className="relative">
-            <h2 className="text-2xl font-bold md:text-3xl">Bugun bepul boshlang</h2>
-            <p className="mx-auto mt-3 max-w-xl text-white/65">
-              Ro&apos;yxatdan o&apos;tish bepul. To&apos;lov faqat amalga oshgan bronlardan. Biznesingizni raqamli dunyoga
-              olib chiqing.
+      {/* Ariza */}
+      <section id="ariza" className="scroll-mt-24 border-t border-line bg-white">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 lg:grid-cols-2 lg:items-center lg:px-8">
+          <div>
+            <span className="text-sm font-semibold uppercase tracking-wide text-gold">Hamkor bo&apos;lish</span>
+            <h2 className="mt-3 text-2xl font-bold md:text-3xl">Ariza qoldiring — biz bog&apos;lanamiz</h2>
+            <p className="mt-3 max-w-md leading-7 text-muted">
+              Ro&apos;yxatdan o&apos;tish bepul. To&apos;lov faqat amalga oshgan bronlardan. Arizangiz ko&apos;rib chiqilgach,
+              kiritgan email va parolingiz bilan biznes panelingizga kira olasiz.
             </p>
-            <Link
-              href="/uzbron-partner-7f3"
-              className="mt-7 inline-flex items-center gap-2 rounded-lg bg-gold px-7 py-3.5 text-sm font-semibold text-[#1a1206] transition hover:bg-gold-light"
-            >
-              Biznes hisob ochish <ArrowRight size={18} />
-            </Link>
+            <ul className="mt-6 space-y-3 text-sm text-ink">
+              {["Komissiya faqat real bronlardan", "Qulay biznes paneli", "Mijozlarga to'g'ridan-to'g'ri chiqish"].map((t) => (
+                <li key={t} className="flex items-center gap-2.5">
+                  <CheckCircle2 size={18} className="text-success" /> {t}
+                </li>
+              ))}
+            </ul>
           </div>
+          <VendorApplyForm />
         </div>
       </section>
     </SitePage>

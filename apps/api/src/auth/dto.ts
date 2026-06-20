@@ -58,6 +58,29 @@ export class RegisterDto {
   name?: string;
 }
 
+export class VendorApplyDto {
+  @IsEmail({}, { message: "Email noto'g'ri" })
+  email!: string;
+
+  @IsString()
+  @Length(6, 100, { message: "Parol kamida 6 belgi" })
+  password!: string;
+
+  @IsString()
+  @Length(2, 120, { message: "Biznes nomi 2–120 belgi" })
+  businessName!: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 60)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(7, 20)
+  phone?: string;
+}
+
 export class CreateBusinessDto {
   @IsEmail()
   email!: string;

@@ -250,6 +250,47 @@ export class AuthService {
     return { user: this.publicUser(user), tokens };
   }
 
+  /**
+   * Hamkor (biznes) arizasi — o'zi ro'yxatdan o'tadi, status PENDING bo'ladi.
+   * Admin tasdiqlamaguncha e'lonlar commit qilinmaydi.
+   */
+  async applyAsVendor(dto: {
+    email: string;
+    password: string;
+    businessName: string;
+    name?: string;
+    phone?: string;
+  }) {
+    const e = dto.email.trim().toLowerCase();
+    if (dto.password.length < 6) throw new BadRequestException("Parol kamida 6 belgidan iborat bo'lsin");
+
+    const existing = await this.prisma.user.findUnique({
+      where: { email: e },
+      include: { vendor: { select: { id: true } } },
+    });
+    if (existing?.vendor) throw new BadRequestException("Bu email bilan hamkor arizasi allaqachon mavjud");
+    if (existing?.passwordHash) throw new BadRequestException("Bu email allaqachon ro'yxatdan o'tgan");
+
+    const passwordHash = await this.hashPassword(dto.password);
+    // Eslatma: User.phone @unique — telefonni faqat Vendor yozuviga saqlaymiz.
+    const user = existing
+      ? await this.prisma.user.update({
+          where: { id: existing.id },
+          data: { passwordHash, role: "VENDOR", ...(dto.name ? { name: dto.name } : {}) },
+        })
+      : await this.prisma.user.create({
+          data: { email: e, passwordHash, role: "VENDOR", name: dto.name ?? null },
+        });
+
+    await this.prisma.vendor.upsert({
+      where: { ownerId: user.id },
+      update: { name: dto.businessName, status: "PENDING", ...(dto.phone ? { phone: dto.phone } : {}) },
+      create: { ownerId: user.id, name: dto.businessName, status: "PENDING", phone: dto.phone ?? null },
+    });
+
+    return { ok: true, status: "PENDING" };
+  }
+
   /** Biznes 2FA: emailga yuborilgan kodni tasdiqlash → tokenlar. */
   async verifyEmailCode(email: string, code: string) {
     const e = email.trim().toLowerCase();

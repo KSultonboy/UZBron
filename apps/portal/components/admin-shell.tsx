@@ -3,15 +3,45 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, LayoutDashboard, LogOut, Menu, ShieldCheck, Store, UserPlus, X } from "lucide-react";
+import {
+  BarChart3,
+  Building2,
+  CalendarDays,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageSquareWarning,
+  ShieldCheck,
+  Star,
+  Store,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { ADMIN_BUSINESS, ADMIN_DASHBOARD, ADMIN_LISTINGS, ADMIN_ROOT, ADMIN_VENDORS } from "@/lib/admin-paths";
+import {
+  ADMIN_BOOKINGS,
+  ADMIN_BUSINESS,
+  ADMIN_DASHBOARD,
+  ADMIN_FEEDBACK,
+  ADMIN_LISTINGS,
+  ADMIN_REPORTS,
+  ADMIN_REVIEWS,
+  ADMIN_ROOT,
+  ADMIN_USERS,
+  ADMIN_VENDORS,
+} from "@/lib/admin-paths";
 
 const nav = [
   { href: ADMIN_DASHBOARD, label: "Boshqaruv paneli", icon: LayoutDashboard },
-  { href: ADMIN_VENDORS, label: "Bizneslar", icon: Store },
+  { href: ADMIN_VENDORS, label: "Hamkorlar", icon: Store },
+  { href: ADMIN_BUSINESS, label: "Hamkor qo'shish", icon: UserPlus },
   { href: ADMIN_LISTINGS, label: "E'lonlar", icon: Building2 },
-  { href: ADMIN_BUSINESS, label: "Biznes qo'shish", icon: UserPlus },
+  { href: ADMIN_REPORTS, label: "Hisobotlar", icon: BarChart3 },
+  { href: ADMIN_BOOKINGS, label: "Bronlar", icon: CalendarDays },
+  { href: ADMIN_USERS, label: "Foydalanuvchilar", icon: Users },
+  { href: ADMIN_REVIEWS, label: "Sharhlar", icon: Star },
+  { href: ADMIN_FEEDBACK, label: "Shikoyat va takliflar", icon: MessageSquareWarning },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
