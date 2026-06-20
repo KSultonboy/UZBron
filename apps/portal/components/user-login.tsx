@@ -4,14 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarCheck, Heart, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  Building2,
+  CalendarCheck,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { GOOGLE_CLIENT_ID } from "@/lib/config";
 import { PARTNER_DASHBOARD } from "@/lib/portal-paths";
 
 const CUSTOMER_HOME = "/bronlarim";
+type Intent = "user" | "partner";
 
-function destForRole(role: string) {
+function autoDest(role: string) {
   return role === "VENDOR" || role === "ADMIN" ? PARTNER_DASHBOARD : CUSTOMER_HOME;
 }
 
@@ -21,18 +30,33 @@ const benefits = [
   { icon: Sparkles, text: "Tez, qulay va xavfsiz kirish" },
 ];
 
+const ROLES: {
+  key: Intent;
+  icon: typeof UserRound;
+  title: string;
+  desc: string;
+}[] = [
+  { key: "user", icon: UserRound, title: "Foydalanuvchi", desc: "Bronlaringizni ko'rish va boshqarish" },
+  { key: "partner", icon: Building2, title: "Hamkor", desc: "Biznes panelini boshqarish" },
+];
+
 export function UserLogin() {
   const router = useRouter();
   const { user, loading, loginWithGoogle } = useAuth();
   const buttonRef = useRef<HTMLDivElement>(null);
+  const [intent, setIntent] = useState<Intent | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Allaqachon kirgan bo'lsa — rolga qarab yo'naltir.
   useEffect(() => {
-    if (!loading && user) router.replace(destForRole(user.role));
+    if (!loading && user) router.replace(autoDest(user.role));
   }, [loading, user, router]);
 
+  // Rol tanlangach Google tugmasini chizamiz.
   useEffect(() => {
-    if (loading || user) return;
+    if (loading || user || !intent) return;
+
+    const dest = intent === "partner" ? PARTNER_DASHBOARD : CUSTOMER_HOME;
 
     const initialize = () => {
       if (!window.google?.accounts?.id || !buttonRef.current) return false;
@@ -41,8 +65,8 @@ export function UserLogin() {
         callback: async ({ credential }) => {
           try {
             setError(null);
-            const u = await loginWithGoogle(credential);
-            router.replace(destForRole(u.role));
+            await loginWithGoogle(credential);
+            router.replace(dest);
           } catch {
             setError("Kirishda xato yuz berdi. Qayta urinib ko'ring.");
           }
@@ -64,7 +88,9 @@ export function UserLogin() {
       if (initialize()) window.clearInterval(timer);
     }, 200);
     return () => window.clearInterval(timer);
-  }, [loading, user, loginWithGoogle, router]);
+  }, [loading, user, intent, loginWithGoogle, router]);
+
+  const activeRole = ROLES.find((r) => r.key === intent);
 
   return (
     <main className="grid min-h-screen bg-white lg:grid-cols-[1.08fr_.92fr]">
@@ -111,37 +137,78 @@ export function UserLogin() {
               UZ<span className="text-gold">Bron</span>
             </Link>
           </div>
-          <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary-50 text-primary">
-            <ShieldCheck size={22} />
-          </div>
-          <h2 className="mt-5 text-2xl font-bold">Hisobingizga kirish</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            Bronlaringizni ko&apos;rish uchun Google orqali davom eting.
-          </p>
 
-          <div className="mt-8 min-h-11">
-            {loading ? (
-              <div className="h-11 animate-pulse rounded-lg bg-canvas" />
-            ) : (
-              <div ref={buttonRef} className="flex w-full justify-center overflow-hidden" />
-            )}
-          </div>
+          {!intent ? (
+            <>
+              <h2 className="text-2xl font-bold">Qanday kirmoqchisiz?</h2>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Hisob turingizni tanlang — sizni mos sahifaga yo&apos;naltiramiz.
+              </p>
+              <div className="mt-7 grid gap-3">
+                {ROLES.map((r) => (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={() => setIntent(r.key)}
+                    className="group flex items-center gap-4 rounded-xl border border-line bg-white p-4 text-left transition hover:border-primary hover:bg-primary-50"
+                  >
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary transition group-hover:bg-primary group-hover:text-white">
+                      <r.icon size={24} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-ink">{r.title}</div>
+                      <div className="text-sm text-muted">{r.desc}</div>
+                    </div>
+                    <ChevronRight size={20} className="shrink-0 text-subtle transition group-hover:text-primary" />
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setIntent(null);
+                  setError(null);
+                }}
+                className="mb-5 inline-flex items-center gap-1 text-sm font-medium text-muted transition hover:text-ink"
+              >
+                <ChevronLeft size={16} /> Orqaga
+              </button>
+              <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary-50 text-primary">
+                {activeRole && <activeRole.icon size={22} />}
+              </div>
+              <h2 className="mt-5 text-2xl font-bold">
+                {intent === "partner" ? "Hamkor sifatida kirish" : "Foydalanuvchi sifatida kirish"}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {intent === "partner"
+                  ? "Tasdiqlangan biznes hisobingiz bilan Google orqali davom eting."
+                  : "Bronlaringizni ko'rish uchun Google orqali davom eting."}
+              </p>
 
-          {error && (
-            <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+              <div className="mt-8 min-h-11">
+                <div ref={buttonRef} className="flex w-full justify-center overflow-hidden" />
+              </div>
+
+              {error && (
+                <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+              )}
+
+              <p className="mt-8 border-t border-line pt-5 text-xs leading-5 text-subtle">
+                Kirish orqali{" "}
+                <Link href="/shartlar" className="text-primary underline">
+                  shartlar
+                </Link>{" "}
+                va{" "}
+                <Link href="/maxfiylik" className="text-primary underline">
+                  maxfiylik siyosati
+                </Link>
+                ga rozilik bildirasiz.
+              </p>
+            </>
           )}
-
-          <p className="mt-8 border-t border-line pt-5 text-xs leading-5 text-subtle">
-            Hamkor yoki agentlik hisobi bilan kirsangiz, avtomatik biznes paneliga yo&apos;naltirilasiz. Kirish orqali{" "}
-            <Link href="/shartlar" className="text-primary underline">
-              shartlar
-            </Link>{" "}
-            va{" "}
-            <Link href="/maxfiylik" className="text-primary underline">
-              maxfiylik siyosati
-            </Link>
-            ga rozilik bildirasiz.
-          </p>
         </div>
       </section>
     </main>
