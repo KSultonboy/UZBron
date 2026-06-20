@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowRight,
@@ -31,10 +30,9 @@ import {
 } from "lucide-react";
 import { API_BASE } from "@/lib/config";
 import { CITY_CARDS, FALLBACK_HOTELS, type PublicHotel } from "@/lib/public-listings";
+import Link from "next/link";
 import { CountUp, EASE, Reveal, Stagger, staggerItem } from "@/components/motion";
-
-// 3D hero — faqat klientda (WebGL), katta ekranlarda.
-const Hero3D = dynamic(() => import("@/components/hero-3d"), { ssr: false });
+import { SiteFooter } from "@/components/site-footer";
 
 const categories = [
   { key: "hotel", label: "Mehmonxona", icon: BedDouble, active: true },
@@ -126,13 +124,14 @@ export function PublicSite() {
           </a>
           <nav className="hidden items-center gap-8 text-sm font-medium text-white/85 md:flex">
             {[
-              ["#hotels", "Mehmonxonalar"],
-              ["#cities", "Shaharlar"],
-              ["#why-us", "Afzalliklar"],
+              ["/mehmonxonalar", "Mehmonxonalar"],
+              ["/bizneslar", "Biznes uchun"],
+              ["/haqida", "Biz haqimizda"],
+              ["/aloqa", "Aloqa"],
             ].map(([href, label]) => (
-              <a key={href} href={href} className="relative transition hover:text-white">
+              <Link key={href} href={href} className="relative transition hover:text-white">
                 {label}
-              </a>
+              </Link>
             ))}
           </nav>
           <div className="flex items-center gap-2">
@@ -144,13 +143,13 @@ export function PublicSite() {
             >
               <Bell size={19} />
             </button>
-            <button
-              type="button"
+            <Link
+              href="/uzbron-partner-7f3"
               className="hidden items-center gap-2 rounded-lg border border-white/25 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 sm:flex"
             >
               <UserRound size={17} />
               Kirish
-            </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -176,11 +175,6 @@ export function PublicSite() {
             className="pointer-events-none absolute -right-24 top-10 h-80 w-80 rounded-full blur-3xl"
             style={{ background: "radial-gradient(circle, rgba(234,179,8,0.22), transparent 70%)" }}
           />
-
-          {/* 3D suzuvchi telefon — buyurtma oqimi (lg+) */}
-          <div className="pointer-events-none absolute bottom-0 right-[1%] top-0 z-[1] hidden w-[44%] lg:block">
-            <Hero3D />
-          </div>
 
           <motion.div
             className="relative z-[2] mx-auto w-full max-w-7xl px-5 lg:px-8"
@@ -429,24 +423,14 @@ export function PublicSite() {
         </section>
       </main>
 
-      <footer className="bg-[#0b1a3d] py-10 text-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 md:flex-row md:items-center md:justify-between lg:px-8">
-          <div>
-            <div className="text-xl font-bold">
-              UZ<span className="text-gold-light">Bron</span>
-            </div>
-            <p className="mt-2 text-sm text-white/55">O&apos;zbekiston bo&apos;ylab ishonchli bron platformasi.</p>
-          </div>
-          <div className="text-sm text-white/55">© 2026 UZBron. Barcha huquqlar himoyalangan.</div>
-        </div>
-      </footer>
+      <SiteFooter />
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 px-4 pt-2 backdrop-blur md:hidden">
         <div className="mx-auto grid max-w-md grid-cols-4" style={{ paddingBottom: "max(0.65rem, env(safe-area-inset-bottom))" }}>
           <MobileNav icon={Home} label="Asosiy" active />
-          <MobileNav icon={Compass} label="Qidiruv" href="#hotels" />
-          <MobileNav icon={CalendarDays} label="Bronlar" />
-          <MobileNav icon={UserRound} label="Profil" />
+          <MobileNav icon={Compass} label="Qidiruv" href="/mehmonxonalar" />
+          <MobileNav icon={CalendarDays} label="Biznes" href="/bizneslar" />
+          <MobileNav icon={UserRound} label="Aloqa" href="/aloqa" />
         </div>
       </nav>
     </div>
